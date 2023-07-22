@@ -26,7 +26,7 @@ builder.Services.AddIdentity<StudentUser,IdentityRole>()
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 
-builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<FCISQuestionsHub.Core.Models.StudentUser>>();
+builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<StudentUser>>();
 builder.Services.AddSingleton(typeof(IBaseRepo<>), typeof(BaseRepo<>));
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 

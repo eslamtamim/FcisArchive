@@ -19,8 +19,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\FCIS-Deploy-main\FCISQuestionsHub.Core\FCISQuestionsHub.Core.csproj" />
-    <ProjectReference Include="..\..\FCIS-Deploy-main\FCISQuestionsHub.EF\FCISQuestionsHub.EF.csproj" />
+    <ProjectReference Include="..\FCISQuestionsHub.Core\FCISQuestionsHub.Core.csproj" />
+    <ProjectReference Include="..\FCISQuestionsHub.EF\FCISQuestionsHub.EF.csproj" />
   </ItemGroup>
 
   <ItemGroup>
