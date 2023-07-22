@@ -1,0 +1,22 @@
+﻿.clickableAns-before:hover {
+    background-color: #e6e6e6;
+    cursor: pointer;
+}
+
+.Qcard {
+    background-color: #f7f7f7;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 10px;
+    border: 1px solid #d6d5d5;
+    font-family: 'Roboto', sans-serif;
+}
+
+.component-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: auto; /* Set the height of the footer */
+    background-color: rgb(20, 24, 28); /* Add your desired background color for the footer */
+}

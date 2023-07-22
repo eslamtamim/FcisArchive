@@ -1,0 +1,150 @@
+﻿@inject UserManager<StudentUser> userManager
+@inject SignInManager<StudentUser> _singInManager
+@inject IUnitOfWork iu
+
+
+<div class="card mb-3 Qcard">
+	<div class="card-body">
+		<h5 class="card-title fw-bolder alert-info d-inline">@Question.Text</h5>
+
+		@if (Question.Photo is not null)
+		{
+			<img src="@Question.Photo" class="card-img-top" alt="Question photo">
+		}
+
+		@if (Question.answers is not null && Question.answers.Count() > 0)
+		{
+			@foreach (var ans in Question.answers)
+			{
+
+				if (sq is null)
+				{
+					<div class="card mx-4 my-3 clickableAns-before">
+						<div class="card-body" @onclick="() => SubmitAnswer(ans.Id)">
+							<span class="fw-bold alert-warning"> @ans.Text </span>
+						</div>
+					</div>
+				}
+				else
+				{
+					if (ans.Id != sq.answerId)
+					{
+						if (ans.IsCorrect)
+						{
+							<div class="card mx-4 my-3">
+								<div class="card-body">
+									<span class="fw-bold alert-success"> @ans.Text ✅ </span>
+								</div>
+							</div>
+						}
+						else
+						{
+							<div class="card mx-4 my-3">
+								<div class="card-body">
+									<span class="fw-bold alert-secondary"> @ans.Text </span>
+								</div>
+							</div>
+						}
+
+					}
+					else
+					{
+						if (ans.IsCorrect)
+						{
+							<div class="card mx-4 my-3">
+								<div class="card-body">
+									<span class="fw-bold alert-success"> @ans.Text ✅ </span>
+								</div>
+							</div>
+						}
+						else
+						{
+							<div class="card mx-4 my-3">
+								<div class="card-body">
+									<span class="fw-bold alert-danger"> @ans.Text ❌ </span>
+								</div>
+							</div>
+						}
+					}
+				}
+
+			}
+		}
+		else
+		{
+			<div class="alert alert-danger m-2 px-5 w-25" role="alert"> no answers </div>
+		}
+
+		<details class="my-3">
+			<summary class="alert-danger d-inline fw-bold">Click Me For a Hint</summary>
+			<br />
+			<p class="alert-warning d-inline fw-bolder">@Question.Hint</p>
+		</details>
+		<p class="fw-bold  d-inline ">Subject: @Question.Subject.Split('-').First() (Lec @(Question.Subject.Split('-')[2] == "1000" ? "All" : Question.Subject.Split('-')[2])) </p>
+
+	</div>
+	@if (questionsRelatedErrors.Any())
+	{
+		@foreach (var error in questionsRelatedErrors)
+		{
+			<p class="text-danger">@error</p>
+		}
+	}
+</div>
+
+
+
+@code {
+
+
+
+	[Parameter]
+	public Question Question { get; set; }
+	public List<string> errors { get; set; } = new List<string>();
+	public List<string> questionsRelatedErrors { get; set; } = new List<string>();
+	public StudentUser studentUser { get; set; }
+	public StudentQuestionAnswer sq { get; set; }
+
+	protected override async void OnInitialized()
+	{
+
+		await base.OnInitializedAsync();
+
+		try
+		{
+			studentUser = userManager.GetUserAsync(_singInManager.Context.User).Result;
+			if (studentUser is null)
+			{
+				errors.Add("login to save your answers");
+				return;
+			}
+
+			sq = await iu.studentQuestions.FindAsync(sq => sq.questionId == Question.Id && sq.studentsId == studentUser.Id);
+
+			StateHasChanged();
+		}
+		catch (Exception e)
+		{
+			errors.Add(e.Message);
+			errors.Add(e.ToString());
+		}
+	}
+
+
+	public async Task SubmitAnswer(long ansId)
+	{
+		if (studentUser is null) return;
+		StudentQuestionAnswer studentQuestion = new StudentQuestionAnswer()
+			{
+				answerId = ansId,
+				questionId = Question.Id,
+				studentsId = studentUser.Id,
+				username = studentUser.UserName
+			};
+		iu.studentQuestions.Add(studentQuestion);
+		sq = studentQuestion;
+		StateHasChanged();
+		await iu.SaveChangesAsync();
+	}
+
+}

@@ -1,0 +1,72 @@
+﻿@inject IUnitOfWork unitOfWork_
+<div class="">
+	@if (subjects is null)
+	{
+		<h6> loading... </h6>
+	}
+	@if (subjects!.Count() > 0)
+	{
+		<br />
+		<div class="m-3 d-flex flex-wrap justify-content-sm-around align-content-center  subjects">
+			@foreach (var subjectLine in subjectsMap)
+			{
+				<div class="">
+					<h3 class="text-black text-decoration-underline fw-bold text-center" @onclick = "() => toggleLectuers = !toggleLectuers" >@subjectLine.Key</h3>
+					@if (true)
+					{
+						@foreach (var lec in subjectLine.Value)
+						{
+							string lecAll = lec;
+							if ((lec.Split('-')[2] == "1000"))
+							{
+								lecAll = "Quesions On All Lectures";
+							}
+							<a class="btn btn-outline-secondary fw-bold m-2 p-2" href="/s/@subjectLine.Key/@lec">
+								@lecAll
+							</a>
+							<br />
+						}
+					}
+				</div>
+			}
+		</div>
+	}
+	else
+	{
+		<h4 class="alert-danger">
+			there are no files got uploaded yet, contact the Admin to upload or try uploading yourself
+		</h4>
+	}
+</div>
+
+
+
+@code {
+
+	public List<string>? subjects { get; set; }
+	public Dictionary<string, List<string>> subjectsMap { get; set; } = new();
+	bool toggleLectuers = false;
+	List<string> errors = new List<string>();
+	protected override Task OnInitializedAsync()
+	{
+		try
+		{
+			int tempOrder = 1000;
+			subjects = unitOfWork_.questions.Subjects().OrderBy(e => (int.TryParse(e.Split('-')[2], out tempOrder) ? tempOrder : tempOrder)).ToList();
+			subjects ??= unitOfWork_.questions.Subjects().ToList();
+			foreach (var sub in subjects)
+			{
+				var subjectName = sub.Split('-').First();
+				if (subjectsMap.GetValueOrDefault(subjectName) is null) subjectsMap.Add(subjectName, new List<string>());
+				subjectsMap[subjectName].Add(sub);
+			}
+		}
+		catch (Exception e)
+		{
+			errors.Add(e.Message);
+			errors.Add(e.ToString());
+		}
+
+		return base.OnInitializedAsync();
+	}
+}

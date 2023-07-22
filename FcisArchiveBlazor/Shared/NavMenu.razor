@@ -1,0 +1,76 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+	<div class="container-fluid">
+		<a class="navbar-brand" href="">Fcis Archive</a>
+		<button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+	</div>
+</div>
+
+
+
+<div class="@NavMenuCssClass nav-scrollable" id="NavMenu" @onclick="ToggleNavMenu">
+
+	<div>
+		<nav class="flex-column">
+			<div class="nav-item px-3">
+				<NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+					<span class="oi oi-home" aria-hidden="true"></span> Home
+				</NavLink>
+			</div>
+			<div class="nav-item px-3">
+				<NavLink class="nav-link" href="upload">
+					<span class="oi oi-plus" aria-hidden="true"></span> Upload
+				</NavLink>
+			</div>
+		</nav>
+	</div>
+
+	<div class="mb-4">
+		<nav class="flex-column">
+			<AuthorizeView>
+				<Authorized>
+					<div class="nav-item px-3">
+						<NavLink class="nav-link fw-bolder" href="/Account/Manage">
+							<span class="oi oi-person" aria-hidden="true"></span> @context.User.Identity?.Name
+						</NavLink>
+					</div>
+				</Authorized>
+
+
+				<NotAuthorized>
+					<div class="nav-item px-3">
+						<NavLink class="nav-link" href="/Account/Register">
+							<span class="oi oi-account-login" aria-hidden="true"></span> Register
+						</NavLink>
+					</div>
+					<div class="nav-item px-3">
+						<NavLink class="nav-link" href="/Account/login">
+							<span class="oi oi-account-login" aria-hidden="true"></span> Log in
+						</NavLink>
+					</div>
+				
+				</NotAuthorized>
+
+			</AuthorizeView>
+			<About />
+
+		</nav>
+	</div>
+
+</div>
+
+
+
+
+@code {
+	private bool collapseNavMenu = true;
+
+	private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+//	private string? navFlexDisplay => !collapseNavMenu ? "d-flex flex-column justify-content-between" : null;
+
+	private void ToggleNavMenu()
+	{
+		collapseNavMenu = !collapseNavMenu;
+	}
+}

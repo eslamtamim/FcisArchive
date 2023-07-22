@@ -1,0 +1,250 @@
+﻿@page "/Upload"
+
+
+@inject IUnitOfWork unitOfWork_
+
+
+<InputFile OnChange="@Upload" multiple class="form-control form-control-lg" />
+
+
+@if (uploaadState == States.done)
+{
+	<div class="alert m-5 alert-success" role="alert">
+		<p>
+			Done @QuestionsThatGotUploaded.Count() / @NumberOfQuestions
+		</p>
+		@if (filesDone.Count() > 0)
+		{
+			foreach (var file in filesDone)
+			{
+				<p>(@file) got uploaded 🥳</p>
+			}
+		}
+		<p>
+			Error Rate @errors.Count()
+		</p>
+	</div>
+}
+else if (uploaadState == States.error)
+{
+	<div class="alert m-5 alert-danger" role="alert">
+		Error
+	</div>
+}
+else if (uploaadState == States.loading)
+{
+	<div class="alert m-5 alert-secondary" role="alert">
+		Loading... @QuestionsThatGotUploaded.Count() / @NumberOfQuestions from @filename
+		<br />
+		@if (filesDone.Count() > 0)
+		{
+			foreach (var file in filesDone)
+			{
+				<p>@file Done ✔</p>
+			}
+		}
+		Error Rate @errors.Count()
+	</div>
+}
+@if (errors.Any())
+{
+	foreach (var error in errors)
+	{
+		if (error.Any())
+		{
+			<div>
+				<details class="my-3">
+					<summary class="alert-danger d-inline fw-bold">
+						<div>
+							 @foreach (var item in @error.First().Split('\n'))
+							{
+								@item <br />
+							} 
+							</div>
+					</summary>
+					<br />
+					@for (int i = 1; i < error.Count(); i++)
+					{
+						<p class="alert m-5 alert-danger" role="alert">
+							@error[i];
+						</p>
+					}
+				</details>
+		</div>
+		}
+	}
+}
+
+
+
+@code {
+
+	enum States
+	{
+		done,
+		error,
+		loading,
+		idle
+	}
+	private States uploaadState { get; set; } = States.idle;
+	private long maxFileSize = 1024 * 1024 * 15;
+	public List<List<string>> errors { get; set; } = new();
+	public List<Question> QuestionsThatGotUploaded { get; set; } = new();
+	public int NumberOfQuestions { get; set; } = 0;
+	public string filename { get; set; }
+	List<string> filesDone { get; set; } = new ();
+
+
+	async Task<bool> Upload(InputFileChangeEventArgs Files)
+	{
+		errors.Clear();
+		NumberOfQuestions = 0;
+		QuestionsThatGotUploaded.Clear();
+		filesDone.Clear();
+		foreach (var file in Files.GetMultipleFiles())
+		{
+			uploaadState = States.loading;
+			List<string> currentFileErrors = new();
+			if (file == null || file.Size == 0)
+			{
+				uploaadState = States.error;
+				break;
+
+			}
+			filename = file.Name;
+			var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "PdfFiles", filename);
+
+			if (file.Size > maxFileSize)
+			{
+				errors.Add(new() { { $"File is Size is {file.Size / 1024 /1024} MB, this is more than the 15 MB Limit" } });
+				if (File.Exists(filePath)) File.Delete(filePath);
+				continue;
+			}
+			if (filename[filename.LastIndexOf('.')..] != ".pdf")
+			{
+				errors.Add(new() { { $"File ({filename}) Must be A PDF" } });
+				if (File.Exists(filePath)) File.Delete(filePath);
+				continue;
+			}
+
+			try
+			{
+				await using FileStream fs = new(filePath, FileMode.Create);
+				await file.OpenReadStream(maxFileSize).CopyToAsync(fs);
+				fs.Dispose();
+			}
+			catch (Exception e)
+			{
+				currentFileErrors.Add("An Error Happend wihle opening the file or trying to copy, try again or contact the Admin");
+				currentFileErrors.Add(e.Message);
+				currentFileErrors.Add(e!.ToString());
+				if (File.Exists(filePath)) File.Delete(filePath);
+
+				errors.Add(new List<string>(currentFileErrors));
+				currentFileErrors.Clear();
+			}
+
+			string Text = PDFtoText.pdfText(filePath);
+			string regexPattern = @"(\d+)\)([\s\S]*?)\(Slide\s(.+?)\)";
+			Regex regex = new Regex(regexPattern);
+			MatchCollection matches = regex.Matches(Text);
+			NumberOfQuestions += matches.Count(); 
+			foreach(Match match in matches)
+			{
+				var result = match.Value.Trim().Split('\n').ToList();
+				Question question = new Question();
+				try
+				{
+					var name = filePath[(filePath.LastIndexOf('\\') + 1)..].Split('-');
+					string fileNumber = name[1][3..] == "" ? "1000" : name[1][3..];
+					string UrlSubjectName = $"{name[0]}-{name[1][..3]}-{fileNumber}";
+					question = new Question()
+						{
+							Subject = UrlSubjectName,
+							//filePath, /* filePath.Substring(filePath.LastIndexOf('\\')+1, filePath.LastIndexOf('.')),*/ // filePath[(filePath.LastIndexOf('\\') + 1)..],
+							Text = result.First(),
+							QuestionType = QuestionType.MCQ,
+							Photo = null,
+							Hint = result.Last(),
+						};
+				}
+				catch (Exception ex)
+				{
+					currentFileErrors.Add(ex.Message);
+					currentFileErrors.Add(ex!.ToString());
+					errors.Add(new List<string>(currentFileErrors));
+					currentFileErrors.Clear();
+					continue;
+				}
+
+
+				result.Remove(result.First());
+				result.Remove(result.Last());
+				try
+				{
+					while (result.Any() && (result.First().Length < 2  || result.First()[1] != ')'))
+					{
+
+						question.Text += result.First();
+						result.Remove(result.First());
+					}
+					await unitOfWork_.questions.AddAsync(question);
+					QuestionsThatGotUploaded.Add(question);
+					StateHasChanged();
+					await unitOfWork_.SaveChangesAsync();
+				}
+				catch (Exception ex)
+				{
+					currentFileErrors.Add($"error happend while adding the \n question : \"{question.Text}\" \n in the file \'{file.Name}\' try adding it manually");
+					currentFileErrors.Add(ex.Message);
+					currentFileErrors.Add(ex!.ToString());
+					unitOfWork_.questions.Delete(question);
+					errors.Add(new List<string>(currentFileErrors));
+					currentFileErrors.Clear();
+					continue;
+				}
+
+				foreach (var ans in result)
+				{
+					Answer answer = new Answer();
+					try
+					{
+						answer = new Answer()
+							{
+								Text = ans,
+								IsCorrect = false,
+								QuestionId = question.Id
+							};
+
+						int lengthOfAnswerText = ans.Length;
+						int indexOfTheStarIndecator = ans.LastIndexOf('*');
+						if (indexOfTheStarIndecator > 0 && lengthOfAnswerText - indexOfTheStarIndecator <= 3)
+						{
+							answer.IsCorrect = true;
+							answer.Text = ans[..indexOfTheStarIndecator];
+						}
+						await unitOfWork_.answers.AddAsync(answer);
+					}
+					catch (Exception ex)
+					{
+						currentFileErrors.Add($"error happend while adding the an answer to the question {question.Text} try adding it manually");
+						currentFileErrors.Add(ex.Message);
+						currentFileErrors.Add(ex!.ToString());
+						errors.Add(new List<string>(currentFileErrors));
+						currentFileErrors.Clear();
+						continue;
+					}
+				}
+				await unitOfWork_.SaveChangesAsync();
+			}
+
+			filesDone.Add(filename);
+			if (File.Exists(filePath)) File.Delete(filePath);
+
+		}
+		uploaadState = States.done;
+		// to do : release the memory after u finish with the function
+		return true;
+	}
+}
+

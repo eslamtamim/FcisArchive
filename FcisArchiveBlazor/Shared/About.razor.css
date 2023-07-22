@@ -1,0 +1,13 @@
+﻿footer {
+    background-color: #14181c;
+    margin-left : 20px;
+}
+a {
+    text-decoration: none;
+    color: white;
+}
+
+.Myname{
+    display: inline-block;
+   
+}
