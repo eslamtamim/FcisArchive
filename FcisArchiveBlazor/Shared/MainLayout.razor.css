@@ -47,6 +47,12 @@ main {
         display: none;
     }
 
+    .sidebar {
+        position: fixed;
+        width: 100%;
+        z-index: 3;
+    }
+
     .top-row.auth {
         justify-content: space-between;
     }
@@ -67,6 +73,8 @@ main {
         position: sticky;
         top: 0;
     }
+ 
+
 
     .top-row {
         position: sticky;

@@ -1,0 +1,204 @@
+﻿@page "/AddQuestion"
+@inject ApplicationDbContext _dbcontext
+@inject NavigationManager nav
+@inject IMemoryCache cache
+
+
+<AuthorizeView Roles="Admin, Super-Admin">
+
+    <Authorized>
+
+        <a class="mb-4 btn btn-outline-secondary" href="/">Home</a>
+
+
+        <div class="card mb-3 Qcard">
+
+            <EditForm OnValidSubmit="SubmitAddedQuestion" Context="editContext" Model="question">
+                <DataAnnotationsValidator />
+                <div class="card-body">
+                    <div class="d-flex gap-4 mb-4 justify-content-between align-items-center">
+                        <InputTextArea placeholder="Question Text" @bind-Value="@question.Text" class="card-title w-100 form-control-lg fw-bolder alertinfo d-inline"></InputTextArea>
+                        <br />
+                        <ValidationMessage For="() => question.Text" />
+                    </div>
+                    <div class="d-flex justify-content-between mx">
+                        <div>
+
+                            <label>Change Question Photo</label>
+                            <InputFile OnChange="SavePhoto" class="form-control form-control m-3 mb-4" />
+
+                            <div>
+                                @if (question.answers.Any())
+                                {
+
+                                    @foreach (var ans in question.answers)
+                                    {
+
+                                        <div class="d-flex justify-content-around align-items-center">
+                                            <div class="card mx-4 my-3">
+                                                <div class="card-body">
+                                                    <InputText @bind-Value="@ans.Text" placeholder="Answer Text" class="form-control fw-bold"></InputText>
+                                                    <ValidationMessage For="
+                                                () => ans.Text" />
+
+                                                </div>
+                                            </div>
+                                            @if (ans.IsCorrect)
+                                            {
+                                                <input type="radio" class="form-check-input" name="ansCorrecties" checked value="@ans.IsCorrect"
+                                                @onclick="()=>{
+                                            question.answers.FirstOrDefault(a=>a.IsCorrect).IsCorrect = false;
+                                            ans.IsCorrect = true;
+                                    }" />
+                                            }
+                                            else
+                                            {
+                                                <input type="radio" class="form-check-input" name="ansCorrecties" value="@ans.IsCorrect"
+                                                @onclick="()=>{
+                                            var correct = question.answers.FirstOrDefault(a=>a.IsCorrect);
+                                            if(correct is not null)correct.IsCorrect = false;
+                                            ans.IsCorrect = true;
+                                    }" />
+                                            }
+                                            <ValidationMessage For="() => ans.IsCorrect" />
+
+                                            <div class="m-4 btn btn-danger" @onclick="()=>question.answers.Remove(ans)">x</div>
+                                        </div>
+
+                                    }
+
+                                }
+                                <button class="btn btn-outline-secondary m-4 px-xxl-4"
+                                @onclick="()=>{
+                            question.answers.Add(new Answer());
+                            StateHasChanged();
+                            }">
+                                    + Create Answer
+                                </button>
+
+
+                                <div class="m-4">
+                                    <InputText @bind-Value="@question.Hint" placeholder="Add Hint" class="form-control d-inline fw-bolder"></InputText>
+
+                                </div>
+
+                            </div>
+
+
+                        </div>
+                        <div>
+
+                            @if (question.Photo is not null)
+                            {
+                                <img src="@question.Photo" width="400" title="QuestionPhoto" alt="QuestionPhoto" />
+
+                                <br />
+
+                                <br />
+
+                                <div @onclick="() => {question.Photo = null;}" class="btn btn-danger">delete photo</div>
+                            }
+                            else
+                            {
+                                <img class="d-block" src="QuestionsPhotos/404notfound.png" width="400" title="QuestionPhoto" alt="404NOTFoundPhoto" />
+
+                            }
+                        </div>
+
+                    </div>
+                    <div class="m-4">
+
+                        <lable class="fw-bold m-2"> Set The Subject of The Question </lable>
+                        <InputSelect @bind-Value="@question.Subject" class="form-control w-25 fw-bold">
+
+                            @foreach (var subject in subjects)
+                            {
+                                <option value="@subject">@subject </option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => question.Subject" />
+
+                    </div>
+
+                </div>
+                <button class="btn btn-secondary mx-5 my-3">Add Question</button>
+            </EditForm>
+
+        </div>
+    </Authorized>
+
+    <NotAuthorized>
+        <h3 class="text-danger">You are not allowed to view this page, if you think otherwise contact <a target="_blank" href="https://t.me/mimatmalxe">Tamim(mimatmalxe)</a></h3>
+        <h4 class="text-danger">This page is coming soon for all users, Just working on it...</h4>
+
+    </NotAuthorized>
+</AuthorizeView>
+
+
+@code {
+
+    public Question question { get; set; } = new();
+    public List<string> subjects { get; set; } = new();
+    public string statePhoto { get; set; }
+    public bool editMood { get; set; }
+
+    protected override Task OnParametersSetAsync()
+    {
+        question.answers = new();
+        question.answers.Add(new Answer());
+        question.answers.Add(new Answer());
+        return base.OnParametersSetAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        subjects = _dbcontext.questions.Select(q => q.Lecture.Name).Distinct().ToList();
+        subjects.Insert(0, "");
+        await base.OnInitializedAsync();
+    }
+
+    async void SubmitAddedQuestion()
+    {
+        try
+        {
+
+            await _dbcontext.AddAsync<Question>(question);
+            await _dbcontext.SaveChangesAsync();
+            cache.Remove(question.Subject);
+            cache.Remove("questionCount" + question.Subject);
+
+            if (question.Photo is not null)
+            {
+                string filePath = Path.Combine("wwwroot", "QuestionsPhotos", $"QuestionPhoto-0{question.Photo[question.Photo.LastIndexOf('.')..]}");
+                question.Photo = Path.Combine("QuestionsPhotos", $"QuestionPhoto-{question.Id}{question.Photo[question.Photo.LastIndexOf('.')..]}");
+                File.Move(filePath, "wwwroot\\" + question.Photo);
+                await _dbcontext.SaveChangesAsync();
+            }
+            nav.NavigateTo(nav.BaseUri + $"s/{question.Lecture.Name.Split('-')[0]}/{question.Subject}#{question.Id}", false, true);
+
+        }
+        catch
+        {
+
+        }
+
+    }
+
+    async void SavePhoto(InputFileChangeEventArgs input)
+    {
+        IBrowserFile file = input.File;
+        long MAX_FILE_SIZE = 1024 * 1024 * 5;
+
+        if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "QuestionsPhotos")))
+        {
+            Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "QuestionsPhotos"));
+        }
+        string filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "QuestionsPhotos", $"QuestionPhoto-{question.Id}{file.Name[file.Name.LastIndexOf('.')..]}");
+        await using FileStream fs = new(filePath, FileMode.Create);
+        await file.OpenReadStream(MAX_FILE_SIZE).CopyToAsync(fs);
+        question.Photo = Path.Combine("QuestionsPhotos", $"QuestionPhoto-{question.Id}{file.Name[file.Name.LastIndexOf('.')..]}");
+        this.StateHasChanged();
+    }
+
+}
+

@@ -1,0 +1,47 @@
+﻿@page "/Admin"
+@using Microsoft.EntityFrameworkCore.Storage;
+@using System.ComponentModel.DataAnnotations;
+@inject UserManager<StudentUser> userManager
+@inject SignInManager<StudentUser> signInManager
+@inject RoleManager<IdentityRole> roleManager
+@inject ApplicationDbContext _dbcontext
+
+
+<AuthorizeView Roles="Super-Admin">
+        <Authorized>
+            <div class="d-flex justify-content-around">
+
+        <div class="card" style="width: 18rem;">
+            <img src="/AddRole.png" width="15" class="card-img-top" alt="AddRoleImage">
+            <div class="card-body">
+                <h5 class="card-title">Add Roles</h5>
+                <p class="card-text">Add Roles to users</p>
+                    <a href="/Admin/ManageRoles" class="btn btn-primary">Role Page</a>
+            </div>
+        </div>
+
+
+        <div class="card" style="width: 18rem;">
+            <img src="/AddRole.png" class="card-img-top" alt="...">
+            <div class="card-body">
+                <h5 class="card-title">Card title</h5>
+                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                <a href="#" class="btn btn-primary">Go somewhere</a>
+            </div>
+        </div>
+        </div>
+
+            
+        </Authorized>
+
+        <NotAuthorized>
+        <h3 class="text-danger" >You are not allowed to view this page, if you think otherwise contact <a target="_blank" href="https://t.me/mimatmalxe">Tamim(mimatmalxe)</a></h3>
+        </NotAuthorized>
+
+    </AuthorizeView>
+
+
+@code {
+    
+   
+}

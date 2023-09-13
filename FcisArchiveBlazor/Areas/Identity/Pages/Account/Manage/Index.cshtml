@@ -1,4 +1,4 @@
-﻿@page "/Account/Manage"
+﻿@page "/Account/Manage2"
 @model IndexModel
 @{
     ViewData["Title"] = "Profile";
@@ -12,7 +12,7 @@
         <form id="profile-form" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
             <div class="form-floating mb-3">
-                <input asp-for="Input.Username" class="form-control" placeholder="Please choose your username."  />
+                <input asp-for="Input.Username" class="form-control" placeholder="Please choose your username." />
                 <label asp-for="Input.Username" class="form-label"></label>
             </div>
             <div class="form-floating mb-3">
@@ -23,10 +23,10 @@
                 <input asp-for="Input.LastName" class="form-control" placeholder="Please choose your Last Name." />
                 <label asp-for="Input.LastName" class="form-label"></label>
             </div>
-          @*  <div class="form-floating mb-3">
-                <input asp-for="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number."/>
-                <label asp-for="Input.PhoneNumber" class="form-label"></label>
-                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+            @*  <div class="form-floating mb-3">
+            <input asp-for="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number."/>
+            <label asp-for="Input.PhoneNumber" class="form-label"></label>
+            <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
             </div>*@
             <button id="update-profile-button" type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
         </form>

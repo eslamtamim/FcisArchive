@@ -1,0 +1,35 @@
+﻿@page "/Admin/ManegeUsers"
+
+@inject UserManager<StudentUser> userManager
+@inject SignInManager<StudentUser> signInManager
+@inject RoleManager<IdentityRole> roleManager
+@inject ApplicationDbContext _dbcontext
+
+
+<AuthorizeView Roles="Super-Admin">
+    <Authorized>
+        <h3>Manege Users</h3>
+
+    </Authorized>
+    <NotAuthorized>
+
+
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+
+    public List<StudentUser> StudentUsers { get; set; }
+    public StudentUser CurrentUser { get; set; }
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+
+
+
+
+        await base.OnParametersSetAsync();
+    }
+
+}

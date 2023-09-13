@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
@@ -55,9 +55,9 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account.Manage
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
-           
 
-            public string Username{ get; set; }
+
+            public string Username { get; set; }
             public string FirstName { get; set; }
             public string LastName { get; set; }
         }
@@ -71,7 +71,7 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account.Manage
 
             Input = new InputModel
             {
-                Username = userName,   
+                Username = userName,
                 FirstName = user.FirstName,
                 LastName = user.LastName
             };
@@ -103,7 +103,7 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
-     
+
 
             if (Input.Username != user.UserName && Input.Username is not null)
             {
@@ -114,7 +114,7 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account.Manage
                     throw new InvalidOperationException($"Unexpected error occurred setting username for user with ID '{userId}'.");
                 }
             }
-            if (Input.FirstName != user.FirstName&& Input.FirstName is not null)
+            if (Input.FirstName != user.FirstName && Input.FirstName is not null)
             {
                 user.FirstName = Input.FirstName;
                 await _userManager.UpdateAsync(user);

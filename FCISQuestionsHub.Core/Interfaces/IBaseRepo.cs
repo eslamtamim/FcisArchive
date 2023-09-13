@@ -15,9 +15,9 @@ namespace FCISQuestionsHub.Core.Interfaces
 
 		IEnumerable<T> GetAll();
 
-		IEnumerable<T> GetAll(Expression<Func<T, bool>> expression, long? take, long? skip);
+		IEnumerable<T> GetAll(Expression<Func<T, bool>> expression, long? take = null, long? skip = null);
 		Task<T> FindAsync(Expression<Func<T, bool>> expression);
-		Task<IEnumerable<T>> FindMany(Expression<Func<T, bool>> expression);
+		Task<IEnumerable<T>> FindMany(Expression<Func<T, bool>> expression, long? take = null, long? skip = null);
 		Task<long> CountAsync();
 		Task<long> CountAsync(Expression<Func<T,bool>> expression);
 

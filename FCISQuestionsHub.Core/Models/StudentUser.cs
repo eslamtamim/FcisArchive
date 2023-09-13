@@ -15,11 +15,14 @@ namespace FCISQuestionsHub.Core.Models
         //    UserName = Email!.Substring(0, Email.IndexOf('@'));
         //}
         [Required,MaxLength(50)]
-        public string? FirstName { get; set; }
+        public string FirstName { get; set; }
         [Required, MaxLength(50)]
-        public string? LastName { get; set; }
+        public string LastName { get; set; }
+        public string  Image { get; set; }
         public virtual List<Question> questions { get; set; }
         public virtual List<StudentQuestionAnswer> studentQuestions { get; set; }
+
+        
 
 
         // SetFirstNameAsync

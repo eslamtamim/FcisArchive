@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using FCISQuestionsHub.Core.Models.UploadingModels;
 
 namespace FCISQuestionsHub.EF.Data
 {
@@ -19,7 +20,7 @@ namespace FCISQuestionsHub.EF.Data
         {
             base.OnModelCreating(builder);
             builder.Entity<StudentUser>().ToTable("Users", "security")
-                .Ignore(u =>u.PhoneNumber).Ignore(u => u.PhoneNumberConfirmed)
+                .Ignore(u => u.PhoneNumber).Ignore(u => u.PhoneNumberConfirmed)
                 .Ignore(u => u.LockoutEnabled).Ignore(u => u.LockoutEnd)
                 .Ignore(u => u.AccessFailedCount).Ignore(u => u.TwoFactorEnabled);
             builder.Entity<IdentityRole>().ToTable("Roles", "security");
@@ -32,17 +33,29 @@ namespace FCISQuestionsHub.EF.Data
 
             builder.Entity<StudentUser>().HasMany(q => q.questions).WithMany(s => s.students)
                 .UsingEntity<StudentQuestionAnswer>(
-                    j => j.HasOne(sq => sq.question).WithMany(q => q.studentQuestions).HasForeignKey(sq => sq.questionId),
-                    j => j.HasOne(sq => sq.student).WithMany(s => s.studentQuestions).HasForeignKey(sq => sq.studentsId),
+                    j => j.HasOne(sq => sq.question).WithMany(q => q.studentQuestions).HasForeignKey(sq => sq.questionId).OnDelete(DeleteBehavior.NoAction),
+                    j => j.HasOne(sq => sq.student).WithMany(s => s.studentQuestions).HasForeignKey(sq => sq.studentsId).OnDelete(DeleteBehavior.NoAction),
                     j =>
                     {
                         j.HasKey(sqa => new { sqa.studentsId, sqa.questionId });
                     }
-                ) ;
-		}
+                );
+            builder.Entity<FileUpload>().HasOne(f => f.PdfUpload).WithMany(s => s.Files).HasForeignKey(f => f.RequestID).OnDelete(DeleteBehavior.NoAction);
+            builder.Entity<Subject>().HasIndex(s=>s.Name).IsUnique();
+
+
+
+        }
 
         public DbSet<Question> questions { get; set; }
         public DbSet<Answer> answers { get; set; }
+        public DbSet<StudentQuestionAnswer> studentQuestionAnswer { get; set; }
+        public DbSet<Subject> subjects { get; set; }
+        public DbSet<Lecture>  lectures { get; set; }
+
+        public DbSet<PdfUploads> PdfUploads { get; set; }
+        public DbSet<FileUpload> FileUploads { get; set; }
+        public DbSet<FileErrors> FileErrors { get; set;}
 
     }
 }

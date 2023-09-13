@@ -21,19 +21,21 @@ namespace FCISQuestionsHub.EF.Repos
 
 		public IEnumerable<Question> GetBySubject(string subject)
 		{
-			return _context.questions.Where(q => q.Subject == subject).ToList();
+			return null;
+			//return _context.questions.Where(q => q.Subject == subject).ToList();
 		}
 
 		public  void Load()
 		{
-			 _context.questions.Include(q => q.answers).Load();
+			 _context.questions.Include(q => q.answers).LoadAsync();
 			 //_context.questions.Include(q => q.students).Load();
 			 //_context.questions.Include(q => q.studentQuestions).Load();
 		}
 
 		public IEnumerable<string> Subjects()
 		{
-			return _context.questions.Select(q => q.Subject).Distinct();	
+			return null; 
+		//	return _context.questions.Select(q => q.Subject).Distinct();	
 		}
 	}
 }

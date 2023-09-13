@@ -73,8 +73,22 @@ namespace FCISQuestionsHub.EF.Repos
 			return q;
 		}
 
-		public async Task<IEnumerable<T>> FindMany(Expression<Func<T, bool>> expression)
-			=> await context_.Set<T>().Where(expression).ToListAsync() ?? throw new NullReferenceException();
+		public async Task<IEnumerable<T>> FindMany(Expression<Func<T, bool>> expression, long? take, long? skip)
+		{
+			
+
+			IQueryable<T> query = context_.Set<T>().Where(expression);
+			if (skip is not null)
+			{
+				query = query.Skip((int)skip);
+			}
+
+			if (take is not null)
+			{
+				query = query.Take((int)take);
+			}
+			return await query.ToListAsync();
+		}
 
 
 		public IEnumerable<T> GetAll(Expression<Func<T, bool>> expression, long? take, long? skip)

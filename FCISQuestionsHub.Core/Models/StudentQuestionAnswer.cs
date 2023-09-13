@@ -18,7 +18,6 @@ namespace FCISQuestionsHub.Core.Models
 
         public long  answerId { get; set; }
         [Required]
-        public string username { get; set; }
 
         public virtual StudentUser student { get; set; }
         public virtual Question question { get; set; }
