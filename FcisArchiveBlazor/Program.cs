@@ -21,6 +21,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddTransient<ApplicationDbContext>();
 
 
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddIdentity<StudentUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
