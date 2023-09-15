@@ -11,7 +11,7 @@ public enum Semester { First = 1, Second }
 
 
 
-[Index(nameof(Text), nameof(SubjectId),nameof(LectureId))]
+[Index(nameof(SubjectId),nameof(LectureId))]
 public class Question
 {
     public Question()

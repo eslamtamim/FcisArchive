@@ -1,0 +1,64 @@
+﻿@using FCISQuestionsHub.Core.Models.UploadingModels;
+@page "/Upload/{RequestId}/{FileId:int}"
+@inject IMemoryCache cache
+@inject SignInManager<StudentUser> signInManager
+@inject ApplicationDbContext _dbcontext
+
+@if (fileUpload != null)
+{
+    <h3 class="card-title">File Name: <span class="">@fileUpload.FileName</span></h3>
+
+    <h5 class="card-title">File Id: <span class="alert-warning">@fileUpload.FileId</span></h5>
+    <h6 class="card-title">
+        Uploaded via Request: <span class="alert-warning">@fileUpload.PdfUpload.RequestId</span> in
+        @fileUpload.PdfUpload.TimeUploaded.AddHours(3).ToShortDateString()
+    </h6>
+
+    <h3>File Errors</h3>
+    if (fileUpload.FileErrors.Count() > 0)
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Error Message</th>
+                    <th scope="col">Error Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var error in fileUpload.FileErrors)
+                {
+                    <tr class="text-danger">
+                        <td>@error.ErrorMessage</td>
+                        <td>@error.ErrorDescription</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <h3 class="text-danger">No Errors Found</h3>
+    }
+}
+else
+{
+    <h3 class="text-danger">No Uploads Found</h3>
+}
+
+
+@code {
+    [Parameter]
+    public string RequestId { get; set; }
+    [Parameter]
+    public int FileId { get; set; }
+    FileUpload fileUpload = new();
+
+    protected override Task OnInitializedAsync()
+    {
+        string UserName = signInManager.Context.User.Identity?.Name;
+        StudentUser user = _dbcontext.Users.FirstOrDefault(u => u.UserName == UserName);
+        fileUpload = _dbcontext.FileUploads.FirstOrDefault(f => f.PdfUpload.UserId == user.Id && f.FileId == FileId);
+        return base.OnInitializedAsync();
+    }
+
+}

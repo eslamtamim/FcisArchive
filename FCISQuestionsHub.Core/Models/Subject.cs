@@ -15,6 +15,8 @@ public class Subject
     public Year Year { get; set; }
     [Required]
     public Semester Semester { get; set; }
+
+    public virtual List<Question> Questions { get; set; }
     public virtual List<Lecture> Lectures { get; set; }
 
 }

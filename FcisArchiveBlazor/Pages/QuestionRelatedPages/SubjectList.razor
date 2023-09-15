@@ -1,0 +1,65 @@
+﻿@page "/s/{year:int}"
+@inject SignInManager<StudentUser> signInManager
+@inject ApplicationDbContext _dbcontext
+@inject IMemoryCache cache
+
+<div>
+    @if (subjects is null)
+    {
+        <Loading />
+    }
+    else if (subjects!.Count() > 0)
+    {
+        <div class="m-5 d-flex flex-wrap justify-content-sm-around align-content-center">
+
+            @foreach (var subject in subjects)
+            {
+                <div>
+                    <a class="btn btn-outline-secondary fw-bold m-2 p-2" href="/s/@year/@subject">
+                        @subject
+                    </a>
+                    <br />
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <h4 class="alert-danger">
+            No Subjects Yet
+        </h4>
+    }
+</div>
+
+
+
+@code {
+
+    [Parameter]
+    public int year { get; set; }
+    public List<string> subjects { get; set; }
+    List<string> errors = new List<string>();
+    protected override Task OnInitializedAsync()
+    {
+        try
+        {
+
+            string UserName = signInManager.Context.User.Identity.Name;
+            StudentUser user = _dbcontext.Users.FirstOrDefault(s => s.UserName == UserName);
+            if (user is null) return base.OnInitializedAsync();
+            // cacheing the subjects for 1 day, if the cache is empty it will be filled
+            subjects = cache.GetOrCreate("subjects" + year, entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
+                return _dbcontext.subjects.Where(s => s.Year == (FCISQuestionsHub.Core.Models.Year)year).Select(s => s.Name).ToList();
+            });
+        }
+        catch (Exception e)
+        {
+            errors.Add(e.Message);
+            errors.Add(e.ToString());
+        }
+
+        return base.OnInitializedAsync();
+    }
+}

@@ -3,6 +3,7 @@ using System;
 using FCISQuestionsHub.EF.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FCISQuestionsHub.EF.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230915024029_editPDFUploadOndeleteAction")]
+    partial class editPDFUploadOndeleteAction
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -116,7 +119,9 @@ namespace FCISQuestionsHub.EF.Migrations
 
                     b.HasIndex("LectureId");
 
-                    b.HasIndex("SubjectId", "LectureId");
+                    b.HasIndex("SubjectId");
+
+                    b.HasIndex("Text", "SubjectId", "LectureId");
 
                     b.ToTable("questions");
                 });
@@ -462,7 +467,7 @@ namespace FCISQuestionsHub.EF.Migrations
                         .IsRequired();
 
                     b.HasOne("FCISQuestionsHub.Core.Models.Subject", "Subject")
-                        .WithMany("Questions")
+                        .WithMany()
                         .HasForeignKey("SubjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -483,13 +488,13 @@ namespace FCISQuestionsHub.EF.Migrations
                     b.HasOne("FCISQuestionsHub.Core.Models.Question", "question")
                         .WithMany("studentQuestions")
                         .HasForeignKey("questionId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("FCISQuestionsHub.Core.Models.StudentUser", "student")
                         .WithMany("studentQuestions")
                         .HasForeignKey("studentsId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("answer");
@@ -592,8 +597,6 @@ namespace FCISQuestionsHub.EF.Migrations
             modelBuilder.Entity("FCISQuestionsHub.Core.Models.Subject", b =>
                 {
                     b.Navigation("Lectures");
-
-                    b.Navigation("Questions");
                 });
 
             modelBuilder.Entity("FCISQuestionsHub.Core.Models.UploadingModels.FileUpload", b =>

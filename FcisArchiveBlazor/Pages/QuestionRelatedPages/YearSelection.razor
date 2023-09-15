@@ -1,0 +1,115 @@
+﻿@inject ApplicationDbContext _dbcontext
+@inject IMemoryCache cache
+
+<h1>Select Which Year To Get Its Subjects</h1>
+@if (years is null)
+{
+    <Loading />
+}
+else
+{
+
+
+    <div>
+
+        <div class="d-flex  flex-wrap justify-content-start m-5">
+
+            @foreach (var year in years)
+            {
+                <button class="btn btn-outline-secondary fw-bold m-2 p-2" @onclick="()=>{GetSubjects(year);}">
+                    @year.ToString()
+                </button>
+            }
+
+        </div>
+
+        <div class="d-flex flex-wrap justify-content-start align-items-center m-5">
+
+            @if (load)
+            {
+                <Loading />
+            }
+            else
+            {
+                <div class="d-flex flex-wrap justify-content-around gap-2 align-items-center ">
+
+                    @foreach (var subject in _dbcontext.subjects.Where(x => x.Year == year))
+                    {
+
+                        <div class="card d-flex flex-column justify-content-between gap-1" @onclick="()=>{GetLectures(subject);}">
+                            <img class="card-image" src="/SubjectsPhotos/@(subject.Name).png" />
+                            <div class="category fw-bold m-2 p-2">@subject.Name</div>
+                        </div>
+                    }
+                </div>
+            }
+
+
+        </div>
+
+        <div class="d-flex flex-wrap justify-content-start align-items-center m-5">
+
+
+            @if (load)
+            {
+                <Loading />
+            }
+            else
+            {
+                <div class="d-flex flex-wrap justify-content-around align-items-center ">
+
+                    @foreach (var lecture in lectures)
+                    {
+                        <a class="btn btn-outline-secondary fw-bold m-2 p-2" href="/s/@subject.Name/@lecture.Name">
+                            @lecture.Name
+                        </a>
+                    }
+
+
+                </div>
+            }
+
+
+        </div>
+
+    </div>
+
+}
+@code {
+    bool load = false;
+
+    public List<Year> years;
+    public Year? year = Year.Second;
+
+    List<Subject> subjects = new();
+    public Subject subject;
+
+    List<Lecture> lectures = new();
+    public Lecture lecture;
+
+    protected override void OnInitialized()
+    {
+        years = _dbcontext.subjects.Select(x => x.Year).OrderBy(x => (int)x).Distinct().ToList();
+    }
+
+    void GetSubjects(Year year)
+    {
+        load = true;
+        this.year = year;
+        subjects = _dbcontext.subjects.Where(x => x.Year == year).ToList();
+        lecture = null;
+        load = false;
+        StateHasChanged();
+    }
+
+    void GetLectures(Subject subject)
+    {
+        load = true;
+        this.subject = subject;
+        lectures = _dbcontext.lectures.Where(x => x.SubjectId == subject.Id).ToList();
+        load = false;
+        StateHasChanged();
+
+    }
+}
+

@@ -27,7 +27,6 @@ public class LoginInternal : ControllerBase
 			var user = await _userManager.FindByIdAsync(id);
 			await _signInManager.RefreshSignInAsync(user);
 			return Redirect("Manage?");
-			return Redirect("Manage?");
 			// return Ok("Refreshed SignIn Success");
 		}
 		catch (Exception ex)

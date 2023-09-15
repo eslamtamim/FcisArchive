@@ -1,0 +1,115 @@
+﻿@using FCISQuestionsHub.Core.Models.UploadingModels;
+@page "/Upload/{RequestId}"
+@inject NavigationManager nav
+@inject IMemoryCache cache
+@inject SignInManager<StudentUser> signInManager
+@inject ApplicationDbContext _dbcontext
+
+
+
+<div class="d-flex justify-content-between align-items-center">
+    <h3>UploadDetails</h3>
+    <button class="btn btn-danger" @onclick="DeleteUploadContent"> Delete The Changes From This Upload</button>
+</div>
+
+@if (pdfUploads != null)
+{
+
+    <h5 class="card-title">Upload Id: <span class="alert-warning">@pdfUploads.RequestId</span></h5>
+    <h6 class="card-subtitle mb-2 text-muted">Uploaded in @pdfUploads.TimeUploaded.AddHours(3).ToShortDateString()</h6>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">File Name</th>
+                <th scope="col">File Size</th>
+                <th scope="col">Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var file in pdfUploads.Files)
+            {
+                <tr>
+                    <td>@file.FileName</td>
+                    <td>@((file.FileSize) / (1024)) KB</td>
+                    <td>
+                        <a class="btn btn-outline-primary" href="/Upload/@RequestId/@file.FileId">Go to Details</a>
+                        <button class="btn btn-outline-danger" @onclick="()=>{DeleteFile(file);}">Delete File Questions</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <h3 class="text-danger">No Uploads Found</h3>
+}
+
+
+@code {
+
+    [Parameter]
+    public string RequestId { get; set; }
+    PdfUploads pdfUploads = new();
+
+    protected override Task OnInitializedAsync()
+    {
+        string UserName = signInManager.Context.User.Identity?.Name;
+        StudentUser user = _dbcontext.Users.FirstOrDefault(u => u.UserName == UserName);
+        pdfUploads = _dbcontext.PdfUploads.Include(p => p.Files).FirstOrDefault(f => f.RequestId == RequestId && user.Id ==
+        f.UserId);
+        return base.OnInitializedAsync();
+    }
+
+    void DeleteUploadContent()
+    {
+        List<string> lecsNames = new();
+        foreach (var file in pdfUploads.Files)
+        {
+            lecsNames.Add(GetNormalizedFileName(file.FileName));
+        }
+        foreach (var lecName in lecsNames)
+        {
+            var lec = _dbcontext.lectures.FirstOrDefault(q => q.Name == lecName);
+            if (lec != null)
+            {
+                _dbcontext.lectures.Remove(lec);
+                cache.Remove(lecName);
+
+            }
+        }
+        _dbcontext.PdfUploads.Remove(pdfUploads);
+        _dbcontext.SaveChanges();
+        nav.NavigateTo("/upload");
+    }
+
+    void DeleteFile(FileUpload file)
+    {
+
+        var lec = _dbcontext.lectures.FirstOrDefault(q => q.Name == GetNormalizedFileName(file.FileName));
+        if (lec != null)
+        {
+            _dbcontext.lectures.Remove(lec);
+            pdfUploads.Files.Remove(file);
+        }
+        cache.Remove(GetNormalizedFileName(file.FileName));
+        _dbcontext.SaveChanges();
+        StateHasChanged();
+    }
+
+    static string GetNormalizedFileName(string filePath)
+    {
+        int indexOfTheStartOfTheFileName = (filePath.LastIndexOf('\\') + 1);
+        var subjectFileName = filePath[indexOfTheStartOfTheFileName..];
+        subjectFileName = subjectFileName[..(subjectFileName.LastIndexOf('-'))];
+        if (!subjectFileName.ToLower().Contains("all"))
+        {
+            string fileNumber = subjectFileName.Split('-')[1][3..];
+            subjectFileName = $"{subjectFileName.Split('-')[0]}-{subjectFileName.Split('-')[1][..3]}-{fileNumber}";
+        }
+        return subjectFileName;
+    }
+
+
+}

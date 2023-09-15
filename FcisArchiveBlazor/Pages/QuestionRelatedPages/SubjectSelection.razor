@@ -1,0 +1,47 @@
+﻿@page "/s/{year:int}/{subject}"
+@inject ApplicationDbContext _dbcontext
+@inject IMemoryCache cache
+
+
+<h3>@subject</h3>
+
+@if(lectures is null)
+{
+    <Loading/>
+}
+else if(lectures.Count() == 0)
+{
+    <div class="alert alert-danger" role="alert">
+        no lectures yet
+    </div>
+}
+else
+{
+    <div class="d-flex flex-wrap justify-content-sm-around align-content-center">
+        @foreach (var lecture in lectures)
+        {
+            <a class="btn btn-outline-secondary fw-bold m-2 p-2" href="/s/@subject/@lecture">
+                @lecture
+            </a>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string subject { get; set; }
+    [Parameter]
+    public int year { get; set; }
+    List<string> lectures;
+    List<string> errors = new List<string>();
+
+    protected override Task OnInitializedAsync()
+    {
+        lectures = cache.GetOrCreate(nameof(lectures)+subject, entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
+            return _dbcontext.lectures.Where(l => l.Subject.Name == subject).Select(l => l.Name).ToList();
+        });
+        return base.OnInitializedAsync();
+    }
+}

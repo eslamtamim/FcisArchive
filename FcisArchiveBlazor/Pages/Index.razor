@@ -2,37 +2,43 @@
 @page "/index"
 @inject IUnitOfWork unitOfWork_
 @inject SignInManager<StudentUser> si
+@using Microsoft.AspNetCore.Identity
+@using FcisArchiveBlazor.Pages.AdminRelatedPages
+@using FcisArchiveBlazor.Pages.QuestionRelatedPages
+@using FcisArchiveBlazor.Areas.Identity
 
 
 <div class="index">
     <AuthorizeView>
 
-        <Authorized>
-            <div>
-                <SubjectList/>
-            </div>
-        </Authorized>
         <NotAuthorized>
             <div>
-                <LoginDisplay/>
-                <button class=" mx-5 my-4 px-5 btn btn-outline-danger" @onclick="() => guest = !guest">Show Questions Anyway</button>
+                <LoginDisplay />
+                @*  <button class=" mx-5 my-4 px-5 btn btn-outline-danger" @onclick="() => guest = !guest">Show Questions Anyway</button>
+                *@
             </div>
-            @if (guest)
+            @*   @if (guest)
             {
-                <SubjectList />
-            }
+            <SubjectList />
+            } *@
 
         </NotAuthorized>
+
+        <Authorized>
+            <div>
+                <YearSelection />
+            </div>
+        </Authorized>
+
     </AuthorizeView>
-    
-    
+
+
 
 </div>
 
 
 @code {
 
-    bool guest = false;
     List<string> errors = new List<string>();
 
     protected override Task OnInitializedAsync()

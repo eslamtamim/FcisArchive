@@ -1,0 +1,78 @@
+﻿@using FCISQuestionsHub.Core.Models.UploadingModels;
+
+@inject IMemoryCache cache
+@inject SignInManager<StudentUser> signInManager
+@inject ApplicationDbContext _dbcontext
+
+
+
+<h3 class="m-4">ListOfUploads</h3>
+@if (uploads is not null)
+{
+
+    <div class="col-12">
+
+        <div class="d-flex justify-content-around align-items-center gap-2  flex-wrap">
+
+            @if (uploads.Count() > 0)
+            {
+                foreach (var upload in uploads)
+                {
+                    <a class="card my-2 btn" style="width: 19rem;" href="/Upload/@upload.RequestId">
+
+                        <div class="card-body">
+                            <h5 class="my-3 card-title">Upload Id: <span class="alert-warning">@upload.RequestId</span></h5>
+
+                            <h6 class="card-subtitle mb-2 text-muted">Uploaded at @upload.TimeUploaded.AddHours(3).ToShortTimeString() 
+                                in @upload.TimeUploaded.ToShortDateString()</h6>
+                            @* <p class="card-text">
+                                Some Of The Upload Content
+                                <ul>
+                                    @foreach (var file in upload.Files)
+                                    {
+                                        <li class="alert-success d-inline ">
+                                            >    @file.FileName
+                                        </li>
+                                    }
+                                </ul>
+                            </p> *@
+                        </div>
+                    </a>
+
+                }
+            }
+
+        </div>
+
+    </div>
+}
+
+else
+{
+    <Loading />
+}
+
+@code {
+
+    List<PdfUploads> uploads;
+    Exception exception;
+
+    protected override Task OnInitializedAsync()
+    {
+        try
+        {
+            string UserName = signInManager.Context.User.Identity?.Name;
+            StudentUser user = _dbcontext.Users.FirstOrDefault(u => u.UserName == UserName);
+            uploads = _dbcontext.PdfUploads.Where(pdf => pdf.UserId == user.Id).OrderByDescending(f => f.TimeUploaded).ToList();
+            return base.OnInitializedAsync();
+        }
+        catch(Exception ex)
+        {
+            exception = ex;
+        }
+      
+        return base.OnInitializedAsync();
+
+    }
+
+}

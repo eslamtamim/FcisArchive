@@ -1,0 +1,529 @@
+﻿@page "/Upload"
+@using FCISQuestionsHub.Core.Models.UploadingModels;
+
+@inject IMemoryCache cache
+@inject SignInManager<StudentUser> signInManager
+@inject ApplicationDbContext _dbcontext
+
+<AuthorizeView Roles="Admin, Super-Admin">
+    <Authorized>
+
+        <div class=" col-4 my-3">
+            <InputFile OnChange="UploadFiles" multiple class="form-control" />
+        </div>
+        <EditForm Model="subject" Context="UploadContext" OnSubmit="UploadPdf" class="col-4">
+
+            <div class="d-flex flex-row justify-content-between gap-2 rounded-2 m-2 p-2">
+
+                <div>
+                    <div>
+                        <lable>First Year</lable>
+                        <input class="form-check-input" type="radio" Name="year" @onclick="()=>{subject.Year = Year.First;}" value="@Year.First" />
+                    </div>
+                    <div>
+                        <lable>Second Year</lable>
+                        <input class="form-check-input" type="radio" Name="year" @onclick="()=>{subject.Year = Year.Second;}" value="@Year.Second" />
+                    </div>
+                    <div>
+                        <lable>Third Year</lable>
+                        <input class="form-check-input" type="radio" Name="year" @onclick="()=>{subject.Year = Year.Third;}" value="@Year.Third" />
+                    </div>
+                    <div>
+                        <lable>Forth Year</lable>
+                        <input class="form-check-input" type="radio" Name="year" @onclick="()=>{subject.Year = Year.Fourth;}" value="@Year.Fourth" />
+                    </div>
+                </div>
+                <div class="justify-content-end">
+
+
+                    <div>
+                        <lable>First Semester</lable>
+                        <input class="form-check-input" @onclick="()=>{subject.Semester = Semester.First;}" type="radio" Name="semester" value="@Semester.First" />
+                    </div>
+                    <div>
+                        <lable>Second Semester</lable>
+                        <input class="form-check-input" @onclick="()=>{subject.Semester = Semester.Second;}" type="radio" Name="semester" value="@Semester.Second" />
+                    </div>
+
+
+                </div>
+
+
+            </div>
+            <label>Author Name</label>
+            <InputText DisplayName="Author" @bind-Value="AuthorName" class="form-control"></InputText>
+
+            <button class="btn my-2 btn-success" type="submit">Upload</button>
+
+        </EditForm>
+
+
+        @if (uploaadState == States.done)
+        {
+            <div class="alert m-5 alert-success" role="alert">
+                <p>
+                    Done @QuestionsThatGotUploaded.Count() / @NumberOfQuestions
+                </p>
+                @if (filesDone.Count() > 0)
+                {
+                    foreach (var file in filesDone)
+                    {
+                        <p>(@file) got uploaded 🥳</p>
+                    }
+                }
+                <p>
+                    Error Rate @errors.Count()
+                </p>
+            </div>
+        }
+        else if (uploaadState == States.error)
+        {
+            <div class="alert m-5 alert-danger" role="alert">
+                Error
+            </div>
+        }
+        else if (uploaadState == States.loading)
+        {
+            <div class="alert m-5 alert-secondary" role="alert">
+                Loading... @QuestionsThatGotUploaded.Count() / @NumberOfQuestions from @filename
+                <br />
+                @if (filesDone.Count() > 0)
+                {
+                    foreach (var file in filesDone)
+                    {
+                        <p>@file Done ✔</p>
+                    }
+                }
+                Error Rate @errors.Count()
+            </div>
+        }
+        @if (errors.Any())
+        {
+            foreach (var error in errors)
+            {
+                if (error.Any())
+                {
+                    <div>
+                        <details class="my-3">
+                            <summary class="alert-danger d-inline fw-bold">
+                                <div>
+                                    @foreach (var item in @error.First().Split('\n'))
+                                    {
+                                        @item <br />
+                                    }
+                                </div>
+                            </summary>
+                            <br />
+                            @for (int i = 1; i < error.Count(); i++)
+                            {
+                                <p class="alert m-5 alert-danger" role="alert">
+                                    @error[i];
+                                </p>
+                            }
+                        </details>
+                    </div>
+                }
+            }
+        }
+
+
+        <ListOfUploads />
+    </Authorized>
+    <NotAuthorized>
+        <h3>You are not allowed to view this page, if you think otherwise contact <a target="_blank" href="https://t.me/mimatmalxe">Tamim(mimatmalxe)</a></h3>
+        <h4 class="text-danger">This page is coming soon for all users, Just working on it...</h4>
+    </NotAuthorized>
+</AuthorizeView>
+
+
+@code {
+
+    enum States
+    {
+        done,
+        error,
+        loading,
+        idle
+    }
+
+    private int NumberOfQuestions { get; set; } = 0;
+    private long MAX_FILE_SIZE = 1024 * 1024 * 15;
+    private string filename { get; set; }
+    private string UserId { get; set; }
+    private string AuthorName { get; set; }
+    private Subject subject { get; set; } = new();
+    private Lecture lecture { get; set; } = new();
+    private PdfUploads uploadsModel { get; set; } = new();
+    private InputFileChangeEventArgs uploadFiles;
+    private List<List<string>> errors { get; set; } = new();
+    private List<Question> QuestionsThatGotUploaded { get; set; } = new();
+    private List<string> filesDone { get; set; } = new();
+    private List<FileErrors> fileErrors = new();
+    private States uploaadState { get; set; } = States.idle;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userName = signInManager.Context.User.Identity!.Name;
+        if (userName is not null)
+        {
+            UserId = _dbcontext.Users.FirstOrDefault(u => u.UserName == userName).Id;
+        }
+        await base.OnInitializedAsync();
+    }
+
+    void UploadFiles(InputFileChangeEventArgs e)
+    {
+        uploadFiles = e;
+    }
+
+    async Task<bool> UploadPdf()
+    {
+
+        if (uploadFiles is null)
+        {
+            errors.Add(new() { { "please add a file" } });
+            StateHasChanged(); 
+            return false;
+        }
+        if (subject.Year is 0 || subject.Semester is 0)
+        {
+            errors.Add(new() { { "please select the year and the semester" } });
+            StateHasChanged();
+            return false;
+        }
+
+        uploadsModel.RequestId = Guid.NewGuid().ToString();
+        uploadsModel.UserId = UserId;
+
+        _dbcontext.PdfUploads.Add(uploadsModel);
+
+        await _dbcontext.SaveChangesAsync();
+        errors.Clear();
+        NumberOfQuestions = 0;
+        QuestionsThatGotUploaded.Clear();
+        filesDone.Clear();
+
+
+
+        List<FileUpload> fileUploads = new();
+
+        foreach (var file in uploadFiles.GetMultipleFiles(50))
+        {
+            fileErrors = new();
+
+            uploaadState = States.loading;
+
+            if (file == null || file.Size == 0)
+            {
+                uploaadState = States.error;
+                break;
+            }
+            filename = file.Name;
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "PdfFiles", filename);
+
+            bool IsFileValide = await ValidatingFileAsync(file, filePath);
+            if (!IsFileValide) continue;
+
+
+
+            FileUpload fileUpload = new()
+                {
+                    RequestID = uploadsModel.RequestId,
+                    FileName = filename,
+                    FileSize = (int)file.Size,
+                };
+            fileUploads.Add(fileUpload);
+            _dbcontext.FileUploads.Add(fileUpload);
+            var File_Upload_Saving = await _dbcontext.SaveChangesAsync();
+
+            string Text = PDFtoText.pdfText(filePath);
+            string regexPattern = @"(\d+)\)([\s\S]*?)\(Slide\s(.+?)\)";
+            Regex regex = new Regex(regexPattern);
+            MatchCollection matches = regex.Matches(Text);
+
+            NumberOfQuestions += matches.Count();
+
+
+            // initializing the subject and the lecture
+
+            AddingSubjectAndLecture(filePath, File_Upload_Saving, fileUpload.FileId);
+
+            // start working with the regex regexResult
+            foreach (Match match in matches)
+            {
+                var regexResult = match.Value.Trim().Split('\n').ToList();
+                Question question = new Question();
+
+                // initializing the question
+                bool stateOfTheQuestion = AddingQuestion(regexResult, ref question, File_Upload_Saving, fileUpload.FileId);
+                if (stateOfTheQuestion is false) continue;
+
+                // removing the qution text and the hint from the list of the regex regexResult to end up with just the answers
+                regexResult.Remove(regexResult.First());
+                regexResult.Remove(regexResult.Last());
+
+
+                // adding the question to the database and updating the cache and the ui
+                var statesOfTrimingTheRegexResult = TrimingTheRegexResult(regexResult, ref question, File_Upload_Saving, fileUpload.FileId, file.Name);
+                if (statesOfTrimingTheRegexResult is false) continue;
+
+                // deciding the question type - i know it's bad as fuck, but until i find a better way;
+                if (regexResult.Count() == 2 && regexResult.First().Contains("T")) question.QuestionType = QuestionType.TrueFalse;
+                else question.QuestionType = QuestionType.MCQ;
+
+                // initializing the answers
+                AddingAnswers(regexResult, ref question, File_Upload_Saving, fileUpload.FileId);
+
+                ClearCache(question);
+            }
+
+            filesDone.Add(filename);
+            if (File.Exists(filePath)) File.Delete(filePath);
+
+        }
+        uploaadState = States.done;
+        subject = new();
+
+        // to do : release the memory after u finish with the function
+        return true;
+
+
+    }
+
+
+    async Task<bool> ValidatingFileAsync(IBrowserFile file, string filePath)
+    {
+        filename = file.Name;
+        // making sure the file is a pdf and its size is less that 15MB;
+        if (file.Size > MAX_FILE_SIZE)
+        {
+            errors.Add(new() { { $"File is Size is {file.Size / 1024 / 1024} MB, this is more than the 15 MB Limit" } });
+            if (File.Exists(filePath)) File.Delete(filePath);
+            return false;
+        }
+        if (filename[filename.LastIndexOf('.')..] != ".pdf")
+        {
+            errors.Add(new() { { $"File ({filename}) Must be A PDF" } });
+            if (File.Exists(filePath)) File.Delete(filePath);
+            return false;
+        }
+        try
+        {
+            await using FileStream fs = new(filePath, FileMode.Create);
+            await file.OpenReadStream(MAX_FILE_SIZE).CopyToAsync(fs);
+        }
+        catch (Exception e)
+        {
+            List<string> currentFileErrors = new();
+            currentFileErrors.Add("An Error Happend wihle opening the file or trying to copy, try again or contact the Admin");
+            currentFileErrors.Add(e.Message);
+            currentFileErrors.Add(e!.ToString());
+            if (File.Exists(filePath)) File.Delete(filePath);
+            errors.Add(currentFileErrors);
+            currentFileErrors.Clear();
+            return false;
+        }
+        return true;
+
+    }
+
+    void AddingSubjectAndLecture(string filePath, int File_Upload_Saving, int fileUploadId)
+    {
+        try
+        {
+            string normalizedFileName = GetNormalizedFileName(filePath);
+            // adding the subject to the database and updating the cache and the ui
+
+            subject.Name = normalizedFileName.Split('-').First();
+            Subject temp = _dbcontext.subjects.FirstOrDefault(s => s.Name == subject.Name);
+            if (temp is null)
+            {
+                try
+                {
+                    _dbcontext.subjects.Add(subject);
+                    _dbcontext.SaveChanges();
+                }
+                catch (Exception ex)
+                {
+                    SaveErrorsToDb(ex, File_Upload_Saving, fileUploadId);
+                }
+            }
+            else
+            {
+                subject = temp;
+            }
+
+            lecture = new()
+                {
+                    SubjectId = subject.Id,
+                    UploaderId = UserId,
+                    Name = normalizedFileName,
+                };
+            _dbcontext.lectures.Add(lecture);
+
+            _dbcontext.SaveChanges();
+
+        }
+        catch (Exception ex)
+        {
+            SaveErrorsToDb(ex, File_Upload_Saving, fileUploadId);
+        }
+    }
+
+    string GetNormalizedFileName(string filePath)
+    {
+        int indexOfTheStartOfTheFileName = (filePath.LastIndexOf('\\') + 1);
+        var subjectFileName = filePath[indexOfTheStartOfTheFileName..];
+        subjectFileName = subjectFileName[..(subjectFileName.LastIndexOf('-'))];
+        if (!subjectFileName.ToLower().Contains("all"))
+        {
+            string fileNumber = subjectFileName.Split('-')[1][3..];
+            subjectFileName = $"{subjectFileName.Split('-')[0]}-{subjectFileName.Split('-')[1][..3]}-{fileNumber}";
+        }
+        return subjectFileName;
+    }
+    bool AddingQuestion(List<string> regexResult, ref Question question, int File_Upload_Saving, int fileUploadId)
+    {
+        try
+        {
+            question = new Question()
+                {
+                    //filePath, /* filePath.Substring(filePath.LastIndexOf('\\')+1, filePath.LastIndexOf('.')),*/ // filePath[(filePath.LastIndexOf('\\') + 1)..],
+                    SubjectId = subject.Id,
+                    LectureId = lecture.Id,
+                    Text = regexResult.First(),
+                    AuthorName = AuthorName,
+                    Hint = regexResult.Last(),
+                };
+        }
+
+        catch (Exception ex)
+        {
+            Exception e = new(ex.Message + $"error happend while adding the \n question : \"{question.Text}\"  try adding it manually", ex.InnerException);
+            e.Source = ex.Source;
+            List<string> currentFileErrors = new();
+            currentFileErrors.Add(ex.Message);
+            currentFileErrors.Add(ex!.ToString());
+            errors.Add(currentFileErrors);
+            SaveErrorsToDb(e, File_Upload_Saving, fileUploadId);
+            return false;
+        }
+        return true;
+    }
+
+    bool TrimingTheRegexResult(List<string> regexResult, ref Question question, int File_Upload_Saving, int fileUploadId, string fileName)
+    {
+        try
+        {
+            // making sure that the rest of the regex answers doesnot contain garbage strings
+            while (regexResult.Any() && (regexResult.First().Length < 2 || regexResult.First()[1] != ')'))
+            {
+                question.Text += regexResult.First();
+                regexResult.Remove(regexResult.First());
+            }
+
+            QuestionsThatGotUploaded.Add(question);
+            _dbcontext.questions.Add(question);
+            _dbcontext.SaveChanges();
+            StateHasChanged();
+
+        }
+        catch (Exception ex)
+        {
+            Exception e = new(ex.Message + $"error happend while adding the \n question : \"{question.Text}\" \n in the file \'{fileName}\' try adding it manually", ex.InnerException);
+            e.Source = ex.Source;
+            List<string> currentFileErrors = new();
+            currentFileErrors.Add($"error happend while adding the \n question : \"{question.Text}\" \n in the file \'{fileName}\' try adding it manually");
+            currentFileErrors.Add(ex.Message);
+            currentFileErrors.Add(ex!.ToString());
+            _dbcontext.questions.Remove(question);
+            SaveErrorsToDb(e, File_Upload_Saving, fileUploadId);
+            errors.Add(currentFileErrors);
+            return false;
+        }
+        return true;
+    }
+
+    void AddingAnswers(List<string> regexResult, ref Question question, int File_Upload_Saving, int fileUploadId)
+    {
+        foreach (var ans in regexResult)
+        {
+            Answer answer = new Answer();
+            try
+            {
+                answer = new Answer()
+                    {
+                        Text = ans,
+                        IsCorrect = false,
+                        QuestionId = question.Id
+                    };
+
+                int lengthOfAnswerText = ans.Length;
+                int indexOfTheStarIndecator = ans.LastIndexOf('*');
+                if (indexOfTheStarIndecator > 0 && lengthOfAnswerText - indexOfTheStarIndecator <= 3)
+                {
+                    answer.IsCorrect = true;
+                    answer.Text = ans[..indexOfTheStarIndecator];
+                }
+                _dbcontext.answers.Add(answer);
+                _dbcontext.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                Exception e = new(ex.Message + $"error happend while adding the an answer: {answer.Text} to the question {question.Text} try adding it manually", ex.InnerException);
+                e.Source = ex.Source;
+
+                List<string> currentFileErrors = new();
+                currentFileErrors.Add($"error happend while adding the an answer: {answer.Text} to the question {question.Text} try adding it manually");
+                currentFileErrors.Add(ex.Message);
+                currentFileErrors.Add(ex!.ToString());
+                SaveErrorsToDb(ex, File_Upload_Saving, fileUploadId);
+                errors.Add(currentFileErrors);
+                continue;
+            }
+        }
+    }
+
+
+    void SaveErrorsToDb(Exception ex, int File_Upload_Saving, int fileUploadId)
+    {
+        if (File_Upload_Saving != 0)
+        {
+            FileErrors fileError = new()
+                {
+                    ErrorTitle = ex.Source,
+                    ErrorMessage = ex.Message,
+                    ErrorDescription = ex.InnerException.Message,
+                    FileId = fileUploadId
+                };
+            fileErrors.Add(fileError);
+            _dbcontext.FileErrors.Add(fileError);
+            _dbcontext.SaveChanges();
+        }
+    }
+
+    void ClearCache(Question question)
+    {
+        try
+        {
+            cache.Remove("subjects");
+            cache.Remove("questionCount" + question.Lecture.Name);
+            cache.Remove(question.Lecture.Name);
+
+        }
+        catch (Exception ex)
+        {
+            List<string> strings = new();
+            strings.Add("Couldnt clear cache for " + question.Text);
+            strings.Add(ex.Message);
+            strings.Add(ex.InnerException.Message);
+            errors.Add(strings);
+            StateHasChanged();
+        }
+
+    }
+
+
+}
+
+

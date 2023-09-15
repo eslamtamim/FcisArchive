@@ -1,26 +1,36 @@
 {
     "version": "0.2.0",
+    // Use IntelliSense to find out which attributes exist for C# debugging
+    // Use hover for the description of the existing attributes
+    // For further information visit https://github.com/dotnet/vscode-csharp/blob/main/debugger-launchjson.md.
     "configurations": [
         {
-            // Use IntelliSense to find out which attributes exist for C# debugging
-            // Use hover for the description of the existing attributes
-            // For further information visit https://github.com/dotnet/vscode-csharp/blob/main/debugger-launchjson.md.
-            "name": ".NET Core Launch (web)",
+           
+            "name": "debug-hot-reload",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/FcisArchiveBlazor/bin/Debug/net7.0/FcisArchiveBlazor.dll",
-            "args": [],
+            "args": [
+                "watch",
+                "--project",
+                ".",
+                "--verbose"
+            ],
             "cwd": "${workspaceFolder}/FcisArchiveBlazor",
             "stopAtEntry": false,
+            "launchBrowser": {
+                "enabled": false
+            },
             // Enable launching a web browser when ASP.NET Core starts. For more information: https://aka.ms/VSCode-CS-LaunchJson-WebBrowser
             "serverReadyAction": {
                 "action": "openExternally",
                 "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
             },
             "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development"
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "Key": "Value"
             },
             "sourceFileMap": {
                 "/Views": "${workspaceFolder}/Views"
@@ -30,6 +40,6 @@
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach"
-        }
+        },
     ]
 }

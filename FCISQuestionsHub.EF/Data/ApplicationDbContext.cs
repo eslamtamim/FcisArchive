@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using FCISQuestionsHub.Core.Models.UploadingModels;
+using System.Reflection.Emit;
 
 namespace FCISQuestionsHub.EF.Data
 {
@@ -30,18 +31,30 @@ namespace FCISQuestionsHub.EF.Data
             builder.Entity<IdentityRoleClaim<string>>().ToTable("RoleClaims", "security");
             builder.Entity<IdentityUserToken<string>>().ToTable("UserTokens", "security");
 
+            // for sql server
+            //builder.Entity<StudentUser>().HasMany(q => q.questions).WithMany(s => s.students)
+            //       .UsingEntity<StudentQuestionAnswer>(
+            //           j => j.HasOne(sq => sq.question).WithMany(q => q.studentQuestions).HasForeignKey(sq => sq.questionId).OnDelete(DeleteBehavior.NoAction),
+            //           j => j.HasOne(sq => sq.student).WithMany(s => s.studentQuestions).HasForeignKey(sq => sq.studentsId).OnDelete(DeleteBehavior.NoAction),
+            //           j =>
+            //           {
+            //               j.HasKey(sqa => new { sqa.studentsId, sqa.questionId });
+            //           }
+            //   );
 
+            //   builder.Entity<Question>().HasOne(q => q.Subject).WithMany(s => s.Questions).HasForeignKey(q => q.SubjectId).OnDelete(DeleteBehavior.NoAction);
+            //for postgresql 
             builder.Entity<StudentUser>().HasMany(q => q.questions).WithMany(s => s.students)
                 .UsingEntity<StudentQuestionAnswer>(
-                    j => j.HasOne(sq => sq.question).WithMany(q => q.studentQuestions).HasForeignKey(sq => sq.questionId).OnDelete(DeleteBehavior.NoAction),
-                    j => j.HasOne(sq => sq.student).WithMany(s => s.studentQuestions).HasForeignKey(sq => sq.studentsId).OnDelete(DeleteBehavior.NoAction),
+                    j => j.HasOne(sq => sq.question).WithMany(q => q.studentQuestions).HasForeignKey(sq => sq.questionId).OnDelete(DeleteBehavior.Cascade),
+                    j => j.HasOne(sq => sq.student).WithMany(s => s.studentQuestions).HasForeignKey(sq => sq.studentsId).OnDelete(DeleteBehavior.Cascade),
                     j =>
                     {
                         j.HasKey(sqa => new { sqa.studentsId, sqa.questionId });
                     }
                 );
-            builder.Entity<FileUpload>().HasOne(f => f.PdfUpload).WithMany(s => s.Files).HasForeignKey(f => f.RequestID).OnDelete(DeleteBehavior.NoAction);
-            builder.Entity<Subject>().HasIndex(s=>s.Name).IsUnique();
+            builder.Entity<FileUpload>().HasOne(f => f.PdfUpload).WithMany(s => s.Files).HasForeignKey(f => f.RequestID).OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<Subject>().HasIndex(s => s.Name).IsUnique();
 
 
 
@@ -51,11 +64,11 @@ namespace FCISQuestionsHub.EF.Data
         public DbSet<Answer> answers { get; set; }
         public DbSet<StudentQuestionAnswer> studentQuestionAnswer { get; set; }
         public DbSet<Subject> subjects { get; set; }
-        public DbSet<Lecture>  lectures { get; set; }
+        public DbSet<Lecture> lectures { get; set; }
 
         public DbSet<PdfUploads> PdfUploads { get; set; }
         public DbSet<FileUpload> FileUploads { get; set; }
-        public DbSet<FileErrors> FileErrors { get; set;}
+        public DbSet<FileErrors> FileErrors { get; set; }
 
     }
 }
