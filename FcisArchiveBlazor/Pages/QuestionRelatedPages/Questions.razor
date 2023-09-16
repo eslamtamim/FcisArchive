@@ -188,7 +188,7 @@
             // just delete the lecture and the questions will be deleted by cascade
             var qs = _dbcontext.lectures.FirstOrDefault(l => l.Name == LectureName);
             _dbcontext.lectures.Remove(qs);
-            cache.Remove("lectuers" + subject);
+            cache.Remove("subjects");
             cache.Remove("questionCount" + LectureName);
             cache.Remove(LectureName);
             await _dbcontext.SaveChangesAsync();

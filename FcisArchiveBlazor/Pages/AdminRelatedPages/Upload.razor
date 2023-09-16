@@ -513,8 +513,8 @@
         try
         {
             cache.Remove("years");
-            cache.Remove("subjects" + question.Subject.Year);
-            cache.Remove("lectuers" + question.Subject.Name);
+            cache.Remove("subjects"+question.Subject.Year);
+            cache.Remove("lectuers"+question.Subject.Name);
             cache.Remove("questionCount" + question.Lecture.Name);
             cache.Remove(question.Lecture.Name);
 

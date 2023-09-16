@@ -99,6 +99,7 @@ else
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
             return _dbcontext.subjects.Select(x => x.Year).OrderBy(x => (int)x).Distinct().ToList();
         });
+        GetSubjects(Year.Second);
         await base.OnInitializedAsync();
     }
 
@@ -106,7 +107,7 @@ else
     {
         load = true;
         this.year = year;
-        subjects = cache.GetOrCreate("subjects", (entry) =>
+       subjects = cache.GetOrCreate("subjects"+(int)year, (entry) =>
        {
            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
            return _dbcontext.subjects.Where(x => x.Year == year).Select(s => new SubjectDTO(s.Id, s.Name)).ToList();
@@ -120,7 +121,7 @@ else
     {
         load = true;
         this.subject = subject;
-        lectuers = cache.GetOrCreate("lectuers", (entry) =>
+        lectuers = cache.GetOrCreate("lectuers"+subject.Name, (entry) =>
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
             return _dbcontext.lectures.Where(x => x.SubjectId == subject.id).Select(l => new LectureDTO(l.Id, l.Name)).ToList();
