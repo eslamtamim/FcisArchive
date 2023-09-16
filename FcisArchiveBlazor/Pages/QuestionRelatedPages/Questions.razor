@@ -3,6 +3,7 @@
 @inject UserManager<StudentUser> userManager
 @inject SignInManager<StudentUser> signInManager
 @inject NavigationManager navigation
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
 @inject ApplicationDbContext _dbcontext
 @inject IMemoryCache cache
 
@@ -84,15 +85,16 @@
     public List<StudentQuestionAnswer> studentAnswers { get; set; } = new();
     public Dictionary<long, StudentQuestionAnswer> findStudentAnswer { get; set; } = new();
     public List<string> errors = new List<string>();
-
+    public AuthenticationState userAuth { get; set; }
     public StudentUser studentUser { get; set; }
     public long questionCount { get; set; }
     public string userName { get; set; }
 
     protected async override Task OnInitializedAsync()
     {
+        userAuth = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
 
-        userName = signInManager.Context.User.Identity!.Name;
+        userName = userAuth.User.Identity.Name;
 
         if (userName is null)
         {

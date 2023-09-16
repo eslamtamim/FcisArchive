@@ -33,17 +33,17 @@ namespace FCISQuestionsHub.EF.Data
 
             // for sql server
             //builder.Entity<StudentUser>().HasMany(q => q.questions).WithMany(s => s.students)
-            //       .UsingEntity<StudentQuestionAnswer>(
-            //           j => j.HasOne(sq => sq.question).WithMany(q => q.studentQuestions).HasForeignKey(sq => sq.questionId).OnDelete(DeleteBehavior.NoAction),
-            //           j => j.HasOne(sq => sq.student).WithMany(s => s.studentQuestions).HasForeignKey(sq => sq.studentsId).OnDelete(DeleteBehavior.NoAction),
-            //           j =>
-            //           {
-            //               j.HasKey(sqa => new { sqa.studentsId, sqa.questionId });
-            //           }
-            //   );
+            //    .UsingEntity<StudentQuestionAnswer>(
+            //        j => j.HasOne(sq => sq.question).WithMany(q => q.studentQuestions).HasForeignKey(sq => sq.questionId).OnDelete(DeleteBehavior.NoAction),
+            //        j => j.HasOne(sq => sq.student).WithMany(s => s.studentQuestions).HasForeignKey(sq => sq.studentsId).OnDelete(DeleteBehavior.NoAction),
+            //        j =>
+            //        {
+            //            j.HasKey(sqa => new { sqa.studentsId, sqa.questionId });
+            //        }
+            //);
 
-            //   builder.Entity<Question>().HasOne(q => q.Subject).WithMany(s => s.Questions).HasForeignKey(q => q.SubjectId).OnDelete(DeleteBehavior.NoAction);
-            //for postgresql 
+            //builder.Entity<Question>().HasOne(q => q.Subject).WithMany(s => s.Questions).HasForeignKey(q => q.SubjectId).OnDelete(DeleteBehavior.NoAction);
+            //for postgresql
             builder.Entity<StudentUser>().HasMany(q => q.questions).WithMany(s => s.students)
                 .UsingEntity<StudentQuestionAnswer>(
                     j => j.HasOne(sq => sq.question).WithMany(q => q.studentQuestions).HasForeignKey(sq => sq.questionId).OnDelete(DeleteBehavior.Cascade),

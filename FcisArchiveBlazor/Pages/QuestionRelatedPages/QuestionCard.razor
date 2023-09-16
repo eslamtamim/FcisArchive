@@ -2,6 +2,8 @@
 @page "/Question/{questionId:long}"
 @inject UserManager<StudentUser> userManager
 @inject SignInManager<StudentUser> _singInManager
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+
 @inject NavigationManager navigation
 @inject ApplicationDbContext _dbcontext
 
@@ -210,6 +212,7 @@ else
     public StudentQuestionAnswer studentAnswer { get; set; }
     [Parameter]
     public StudentUser studentUser { get; set; }
+    public AuthenticationState userAuth { get; set; }
     [Parameter]
     public long questionId { get; set; }
     [Parameter]
@@ -227,7 +230,9 @@ else
 
         if (question is null)
         {
-            string username = _singInManager.Context.User.Identity.Name;
+            userAuth = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+
+            string username = userAuth.User.Identity.Name;
             question = _dbcontext.questions.Find(questionId);
 
             if (username is not null)
@@ -243,7 +248,7 @@ else
         {
             if (!isAuthorized)
             {
-                errors.Add("login to save your answers");
+                errors.Add("login to save your answers and to unlock more features to use");
                 return;
             }
             StateHasChanged();

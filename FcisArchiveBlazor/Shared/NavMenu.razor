@@ -1,5 +1,7 @@
 ﻿@inject ApplicationDbContext _dbcontext
 @inject SignInManager<StudentUser> _signInManager
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+
 
 
 <div class="top-row ps-3 navbar navbar-dark">
@@ -93,15 +95,27 @@
     public string userImage { get; set; }
     private bool collapseNavMenu = true;
 
+    public AuthenticationState userAuth { get; set; }
+    public StudentUser user { get; set; }
     private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
     //	private string? navFlexDisplay => !collapseNavMenu ? "d-flex flex-column justify-content-between" : null;
 
-  
+
     protected override async Task OnInitializedAsync()
     {
-        if (_signInManager.Context.User.Identity.Name is not null)
+        try
         {
-            userImage = _dbcontext.Users.FirstOrDefault(u => u.UserName == _signInManager.Context.User.Identity.Name).Image;
+            userAuth = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+            user = _dbcontext.Users.FirstOrDefault(u => u.UserName == userAuth.User.Identity.Name);
+
+            if (_signInManager.IsSignedIn(userAuth.User))
+            {
+                userImage = user.Image;
+            }
+        }
+        catch (Exception)
+        {
+
         }
         await base.OnInitializedAsync();
     }

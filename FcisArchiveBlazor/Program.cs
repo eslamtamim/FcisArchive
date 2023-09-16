@@ -35,6 +35,10 @@ builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient();
 
+builder.Services.AddServerSideBlazor().AddCircuitOptions(options =>
+{
+    options.DetailedErrors = true;
+});
 
 var app = builder.Build();
 

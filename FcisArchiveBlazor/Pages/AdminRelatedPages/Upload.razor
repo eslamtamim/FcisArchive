@@ -4,6 +4,8 @@
 @inject IMemoryCache cache
 @inject SignInManager<StudentUser> signInManager
 @inject ApplicationDbContext _dbcontext
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+
 
 <AuthorizeView Roles="Admin, Super-Admin">
     <Authorized>
@@ -160,10 +162,14 @@
     private List<string> filesDone { get; set; } = new();
     private List<FileErrors> fileErrors = new();
     private States uploaadState { get; set; } = States.idle;
+    public AuthenticationState userAuth { get; set; }
+
+
 
     protected override async Task OnInitializedAsync()
     {
-        var userName = signInManager.Context.User.Identity!.Name;
+        userAuth = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        var userName = userAuth.User.Identity.Name;
         if (userName is not null)
         {
             UserId = _dbcontext.Users.FirstOrDefault(u => u.UserName == userName).Id;
@@ -182,7 +188,7 @@
         if (uploadFiles is null)
         {
             errors.Add(new() { { "please add a file" } });
-            StateHasChanged(); 
+            StateHasChanged();
             return false;
         }
         if (subject.Year is 0 || subject.Semester is 0)
@@ -506,7 +512,9 @@
     {
         try
         {
+            cache.Remove("years");
             cache.Remove("subjects");
+            cache.Remove("lectuers");
             cache.Remove("questionCount" + question.Lecture.Name);
             cache.Remove(question.Lecture.Name);
 
@@ -523,7 +531,7 @@
 
     }
 
-
+ 
 }
 
 

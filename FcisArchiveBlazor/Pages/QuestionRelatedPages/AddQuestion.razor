@@ -191,9 +191,8 @@
             subjectDTO = subjects.FirstOrDefault(s => s.id == question.SubjectId);
             lectureDTO = lectuers.FirstOrDefault(l => l.id == question.LectureId);
             cache.Remove(lectureDTO.Name);
-
             cache.Remove("questionCount" + lectureDTO.Name);
-
+            clearIndexCache();
             if (question.Photo is not null)
             {
                 string filePath = Path.Combine("wwwroot", "QuestionsPhotos", $"QuestionPhoto-0{question.Photo[question.Photo.LastIndexOf('.')..]}");
@@ -235,5 +234,12 @@
         this.StateHasChanged();
     }
 
+
+    void clearIndexCache()
+    {
+        cache.Remove("years");
+        cache.Remove("subjects");
+        cache.Remove("lectuers");
+    }
 }
 

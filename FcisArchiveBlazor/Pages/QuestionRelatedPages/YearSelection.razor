@@ -33,7 +33,7 @@ else
             {
                 <div class="d-flex flex-wrap justify-content-around gap-2 align-items-center ">
 
-                    @foreach (var subject in _dbcontext.subjects.Where(x => x.Year == year))
+                    @foreach (var subject in subjects)
                     {
 
                         <div class="card d-flex flex-column justify-content-between gap-1" @onclick="()=>{GetLectures(subject);}">
@@ -58,7 +58,7 @@ else
             {
                 <div class="d-flex flex-wrap justify-content-around align-items-center ">
 
-                    @foreach (var lecture in lectures)
+                    @foreach (var lecture in lectuers)
                     {
                         <a class="btn btn-outline-secondary fw-bold m-2 p-2" href="/s/@subject.Name/@lecture.Name">
                             @lecture.Name
@@ -78,38 +78,57 @@ else
 @code {
     bool load = false;
 
+    record SubjectDTO(int id, string Name);
+    record LectureDTO(int id, string Name);
+
+    List<SubjectDTO> subjects { get; set; } = new();
+    List<LectureDTO> lectuers { get; set; } = new();
+
     public List<Year> years;
     public Year? year = Year.Second;
 
-    List<Subject> subjects = new();
-    public Subject subject;
+    SubjectDTO subject;
 
-    List<Lecture> lectures = new();
-    public Lecture lecture;
+    LectureDTO lecture;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        years = _dbcontext.subjects.Select(x => x.Year).OrderBy(x => (int)x).Distinct().ToList();
+
+        years = cache.GetOrCreate("years", (entry) =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
+            return _dbcontext.subjects.Select(x => x.Year).OrderBy(x => (int)x).Distinct().ToList();
+        });
+        await base.OnInitializedAsync();
     }
 
     void GetSubjects(Year year)
     {
         load = true;
         this.year = year;
-        subjects = _dbcontext.subjects.Where(x => x.Year == year).ToList();
+        subjects = cache.GetOrCreate("subjects", (entry) =>
+       {
+           entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
+           return _dbcontext.subjects.Where(x => x.Year == year).Select(s => new SubjectDTO(s.Id, s.Name)).ToList();
+       });
         lecture = null;
         load = false;
         StateHasChanged();
     }
 
-    void GetLectures(Subject subject)
+    void GetLectures(SubjectDTO subject)
     {
         load = true;
         this.subject = subject;
-        lectures = _dbcontext.lectures.Where(x => x.SubjectId == subject.Id).ToList();
+        lectuers = cache.GetOrCreate("lectuers", (entry) =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
+            return _dbcontext.lectures.Where(x => x.SubjectId == subject.id).Select(l => new LectureDTO(l.Id, l.Name)).ToList();
+        });
         load = false;
         StateHasChanged();
-
     }
+
+   
 }
 

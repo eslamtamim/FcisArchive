@@ -9,41 +9,6 @@
 
 
 <div class="index">
-    <AuthorizeView>
-
-        <NotAuthorized>
-            <div>
-                <LoginDisplay />
-                @*  <button class=" mx-5 my-4 px-5 btn btn-outline-danger" @onclick="() => guest = !guest">Show Questions Anyway</button>
-                *@
-            </div>
-            @*   @if (guest)
-            {
-            <SubjectList />
-            } *@
-
-        </NotAuthorized>
-
-        <Authorized>
-            <div>
-                <YearSelection />
-            </div>
-        </Authorized>
-
-    </AuthorizeView>
-
-
+    <YearSelection />
 
 </div>
-
-
-@code {
-
-    List<string> errors = new List<string>();
-
-    protected override Task OnInitializedAsync()
-    {
-        return base.OnInitializedAsync();
-    }
-
-}

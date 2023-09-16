@@ -2,6 +2,8 @@
 @inject SignInManager<StudentUser> signInManager
 @inject ApplicationDbContext _dbcontext
 @inject IMemoryCache cache
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+
 
 <div>
     @if (subjects is null)
@@ -39,12 +41,13 @@
     public int year { get; set; }
     public List<string> subjects { get; set; }
     List<string> errors = new List<string>();
+public AuthenticationState userAuth { get; set; }
     protected override Task OnInitializedAsync()
     {
         try
         {
 
-            string UserName = signInManager.Context.User.Identity.Name;
+            string UserName = userAuth.User.Identity.Name;
             StudentUser user = _dbcontext.Users.FirstOrDefault(s => s.UserName == UserName);
             if (user is null) return base.OnInitializedAsync();
             // cacheing the subjects for 1 day, if the cache is empty it will be filled

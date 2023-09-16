@@ -4,6 +4,7 @@
 @inject IMemoryCache cache
 @inject SignInManager<StudentUser> signInManager
 @inject ApplicationDbContext _dbcontext
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
 
 
 
@@ -52,10 +53,13 @@ else
     [Parameter]
     public string RequestId { get; set; }
     PdfUploads pdfUploads = new();
+    public AuthenticationState userAuth { get; set; }
 
     protected override Task OnInitializedAsync()
     {
-        string UserName = signInManager.Context.User.Identity?.Name;
+        userAuth =  GetAuthenticationStateAsync.GetAuthenticationStateAsync().Result;
+
+        string UserName = userAuth.User.Identity?.Name;
         StudentUser user = _dbcontext.Users.FirstOrDefault(u => u.UserName == UserName);
         pdfUploads = _dbcontext.PdfUploads.Include(p => p.Files).FirstOrDefault(f => f.RequestId == RequestId && user.Id ==
         f.UserId);

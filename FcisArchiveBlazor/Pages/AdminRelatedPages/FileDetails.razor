@@ -3,6 +3,8 @@
 @inject IMemoryCache cache
 @inject SignInManager<StudentUser> signInManager
 @inject ApplicationDbContext _dbcontext
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+
 
 @if (fileUpload != null)
 {
@@ -51,11 +53,14 @@ else
     public string RequestId { get; set; }
     [Parameter]
     public int FileId { get; set; }
+    public AuthenticationState userAuth { get; set; }
+
     FileUpload fileUpload = new();
 
     protected override Task OnInitializedAsync()
     {
-        string UserName = signInManager.Context.User.Identity?.Name;
+        userAuth = GetAuthenticationStateAsync.GetAuthenticationStateAsync().Result;
+        string UserName = userAuth.User.Identity.Name;
         StudentUser user = _dbcontext.Users.FirstOrDefault(u => u.UserName == UserName);
         fileUpload = _dbcontext.FileUploads.FirstOrDefault(f => f.PdfUpload.UserId == user.Id && f.FileId == FileId);
         return base.OnInitializedAsync();
