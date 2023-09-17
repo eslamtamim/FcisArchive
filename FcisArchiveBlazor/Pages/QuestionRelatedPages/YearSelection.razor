@@ -2,7 +2,7 @@
 @inject IMemoryCache cache
 
 <h1>Select Which Year To Get Its Subjects</h1>
-@if (years is null)
+@if (Years is null)
 {
     <Loading />
 }
@@ -14,7 +14,7 @@ else
 
         <div class="d-flex  flex-wrap justify-content-start m-5">
 
-            @foreach (var year in years)
+            @foreach (var year in Years)
             {
                 <button class="btn btn-outline-secondary fw-bold m-2 p-2" @onclick="()=>{GetSubjects(year);}">
                     @year.ToString()
@@ -25,7 +25,7 @@ else
 
         <div class="d-flex flex-wrap justify-content-start align-items-center m-5">
 
-            @if (load)
+            @if (_load)
             {
                 <Loading />
             }
@@ -33,7 +33,7 @@ else
             {
                 <div class="d-flex flex-wrap justify-content-around gap-2 align-items-center ">
 
-                    @foreach (var subject in subjects)
+                    @foreach (var subject in Subjects)
                     {
 
                         <div class="card d-flex flex-column justify-content-between gap-1" @onclick="()=>{GetLectures(subject);}">
@@ -50,7 +50,7 @@ else
         <div class="d-flex flex-wrap justify-content-start align-items-center m-5">
 
 
-            @if (load)
+            @if (_load)
             {
                 <Loading />
             }
@@ -58,9 +58,9 @@ else
             {
                 <div class="d-flex flex-wrap justify-content-around align-items-center ">
 
-                    @foreach (var lecture in lectuers)
+                    @foreach (var lecture in Lectures)
                     {
-                        <a class="btn btn-outline-secondary fw-bold m-2 p-2" href="/s/@subject.Name/@lecture.Name">
+                        <a class="btn btn-outline-secondary fw-bold m-2 p-2" href="/s/@_subject.Name/@lecture.Name">
                             @lecture.Name
                         </a>
                     }
@@ -76,57 +76,57 @@ else
 
 }
 @code {
-    bool load = false;
+    bool _load = false;
 
-    record SubjectDTO(int id, string Name);
-    record LectureDTO(int id, string Name);
+    record SubjectDto(int Id, string Name);
+    record LectureDto(int Id, string Name);
 
-    List<SubjectDTO> subjects { get; set; } = new();
-    List<LectureDTO> lectuers { get; set; } = new();
+    List<SubjectDto> Subjects { get; set; } = new();
+    List<LectureDto> Lectures { get; set; } = new();
 
-    public List<Year> years;
-    public Year? year = Year.Second;
+    public List<Year> Years;
+    public Year? Year = FCISQuestionsHub.Core.Models.Year.Second;
 
-    SubjectDTO subject;
+    SubjectDto _subject;
 
-    LectureDTO lecture;
+    LectureDto _lecture;
 
     protected override async Task OnInitializedAsync()
     {
 
-        years = cache.GetOrCreate("years", (entry) =>
+        Years = cache.GetOrCreate("years", (entry) =>
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
             return _dbcontext.subjects.Select(x => x.Year).OrderBy(x => (int)x).Distinct().ToList();
         });
-        GetSubjects(Year.Second);
+        GetSubjects(FCISQuestionsHub.Core.Models.Year.Second);
         await base.OnInitializedAsync();
     }
 
     void GetSubjects(Year year)
     {
-        load = true;
-        this.year = year;
-       subjects = cache.GetOrCreate("subjects"+(int)year, (entry) =>
+        _load = true;
+        this.Year = year;
+       Subjects = cache.GetOrCreate("subjects"+(int)year, (entry) =>
        {
            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
-           return _dbcontext.subjects.Where(x => x.Year == year).Select(s => new SubjectDTO(s.Id, s.Name)).ToList();
+           return _dbcontext.subjects.Where(x => x.Year == year).Select(s => new SubjectDto(s.Id, s.Name)).ToList();
        });
-        lecture = null;
-        load = false;
+        _lecture = null;
+        _load = false;
         StateHasChanged();
     }
 
-    void GetLectures(SubjectDTO subject)
+    void GetLectures(SubjectDto subject)
     {
-        load = true;
-        this.subject = subject;
-        lectuers = cache.GetOrCreate("lectuers"+subject.Name, (entry) =>
+        _load = true;
+        this._subject = subject;
+        Lectures = cache.GetOrCreate("lectures"+subject.Name, (entry) =>
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
-            return _dbcontext.lectures.Where(x => x.SubjectId == subject.id).Select(l => new LectureDTO(l.Id, l.Name)).ToList();
+            return _dbcontext.lectures.Where(x => x.SubjectId == subject.Id).Select(l => new LectureDto(l.Id, l.Name)).ToList();
         });
-        load = false;
+        _load = false;
         StateHasChanged();
     }
 

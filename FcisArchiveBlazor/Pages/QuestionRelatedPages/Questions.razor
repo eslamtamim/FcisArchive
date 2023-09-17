@@ -10,12 +10,12 @@
 <div>
 
     <div class="d-flex align-content-between justify-content-between">
-        <h1 class="fw-bold">@LectureName.Replace('-',' ').Replace("Lec","Lecture")</h1>
+        <h1 class="fw-bold">@LectureName.Replace('-', ' ').Replace("Lec", "Lecture")</h1>
         <AuthorizeView>
             <div>
                 <button class="btn d-inline btn-warning" @onclick="ResetQuestionsAnswers">Reset All Answers</button>
                 <AuthorizeView Context="childContext" Roles="Super-Admin, Admin">
-                    <button class="btn d-inline btn-danger" @onclick="DeleteQuestionsBySubject">Delete This Lecute</button>
+                    <button class="btn d-inline btn-danger" @onclick="DeleteQuestionsBySubject">Delete This Lecture</button>
                 </AuthorizeView>
             </div>
         </AuthorizeView>
@@ -24,29 +24,27 @@
     @* <p class="alert-warning" style="width:fit-content">This is a demo version of the app, due to the cost of the
     database, questions are limited to only 20 but the count is accurate </p>*@
 
-    @if (errors.Count() > 0)
+    @if (_errors.Count > 0)
     {
-        @foreach (var error in errors)
+        @foreach (var error in _errors)
         {
             <p class="my-0 text-danger">@error</p>
         }
-
     }
-    @if (filterdQuestions is null)
+    @if (FilteredQuestions is null)
     {
-        <Loading />
+        <Loading/>
     }
-    else if (filterdQuestions!.Count() == 0)
+    else if (FilteredQuestions!.Count == 0)
     {
         <div class="alert alert-danger" role="alert">
             no questions yet
         </div>
-
     }
     else
     {
-        <div class="d-flex @(errors.Count() > 0 ? "justify-content-between" : "justify-content-end") ">
-            @if (errors.Count() > 0)
+        <div class="d-flex @(_errors.Count > 0 ? "justify-content-between" : "justify-content-end") ">
+            @if (_errors.Count > 0)
             {
                 <div class="d-flex m-3">
                     <a class="btn mx-3 btn-secondary" href="Account/Register">Register</a>
@@ -56,150 +54,155 @@
             <p style="font-size: 25px " class="fw-bolder">
                 Amount of Questions :
                 <span class="alert-info">
-                    @questionCount
+                    @QuestionCount
                 </span>
             </p>
         </div>
-        foreach (var question in filterdQuestions!)
+        foreach (var question in FilteredQuestions!)
         {
-            <QuestionCard question="@question" isAuthorized="@(userName is null ? false : true)"
-                          studentAnswer="@(findStudentAnswer.ContainsKey(question.Id) ? findStudentAnswer[question.Id] : null)"
-                          studentUser="@studentUser" />
+            <QuestionCard Question="@question" IsAuthorized="@(UserName is not null)"
+                          StudentAnswer="@(FindStudentAnswer.TryGetValue(question.Id, out var value) ? value : null)"
+                          StudentUser="@StudentUser"/>
         }
     }
 
 </div>
 
 
-
-
 @code {
 
     [Parameter]
     public string LectureName { get; set; }
+
     [Parameter]
-    public string subject { get; set; }
+    public string Subject { get; set; }
 
     //public record StudentAnswersDTO(string StudentId, long questionId, long answerId);
 
-    public List<Question> filterdQuestions { get; set; }
-    public List<StudentQuestionAnswer> studentAnswers { get; set; } = new();
+    List<Question> FilteredQuestions { get; set; }
+    List<StudentQuestionAnswer> StudentAnswers { get; set; } = new();
 
-    public Dictionary<long, StudentQuestionAnswer> findStudentAnswer { get; set; } = new();
-    public List<string> errors = new List<string>();
-    public AuthenticationState userAuth { get; set; }
-    public StudentUser studentUser { get; set; }
-    Lecture lecture { get; set; }
-    public long questionCount { get; set; }
-    public string userName { get; set; }
+    Dictionary<long, StudentQuestionAnswer> FindStudentAnswer { get; set; } = new();
+    readonly List<string> _errors = new List<string>();
+    AuthenticationState UserAuth { get; set; }
+    StudentUser StudentUser { get; set; }
+    Lecture Lecture { get; set; }
+    long QuestionCount { get; set; }
+    string UserName { get; set; }
 
-    protected async override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
-        userAuth = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        UserAuth = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
 
-        userName = userAuth.User.Identity.Name;
+        if (UserAuth.User.Identity != null) UserName = UserAuth.User.Identity.Name;
 
-        if (userName is null)
+        if (UserName is null)
         {
-            errors.Add("you are not logged in");
-            errors.Add("login to save the state of your answers");
+            _errors.Add("you are not logged in");
+            _errors.Add("login to save the state of your answers");
         }
         else
         {
-            studentUser = await userManager.FindByNameAsync(userName);
-            lecture = await _dbcontext.lectures.FirstOrDefaultAsync(l => l.Name == LectureName);
-            studentAnswers = await GetStudentQuestionAnswers();
-
-            foreach (var sq in studentAnswers) findStudentAnswer[sq.questionId] = sq;
-
+            StudentUser = await userManager.FindByNameAsync(UserName);
+            Lecture = await _dbcontext.lectures.FirstOrDefaultAsync(l => l.Name == LectureName);
+            StudentAnswers = await GetStudentQuestionAnswers();
+            foreach (var sq in StudentAnswers) FindStudentAnswer[sq.questionId] = sq;
         }
 
+        QuestionCount = cache.GetOrCreate<long>("questionCount" + LectureName, entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
+            return _dbcontext.questions.LongCount(q => q.Lecture.Name == LectureName);
+        });
+        
+        FilteredQuestions = await cache.GetOrCreateAsync('q'+LectureName, async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
+            return await GetQuestions(LectureName);
+        });
+       
 
-        //cache the questions for 1 day
-
-        questionCount = cache.GetOrCreate<long>("questionCount" + LectureName, entry =>
-       {
-           entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
-           return _dbcontext.questions.LongCount(q => q.Lecture.Name == LectureName);
-       });
-
-        filterdQuestions = await cache.GetOrCreateAsync(LectureName, async entry =>
-       {
-           entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
-           return await GetQuestions(LectureName);
-       });
-
-
-        //cache the question count for 1 day
+    //cache the question count for 1 day
 
 
         await base.OnInitializedAsync();
     }
 
 
-    async Task<List<Question>> GetQuestions(string LectureName)
+    async Task<List<Question>> GetQuestions(string lectureName)
     {
         try
         {
-            if (string.IsNullOrEmpty(LectureName))
+            if (string.IsNullOrEmpty(lectureName))
             {
                 return new List<Question>();
             }
 
 
             List<Question> result = new();
-            int database_Selection_CHUNCK = 300;
+            const int databaseSelectionChunk = 300;
 
-            for (int i = 0; i < questionCount / database_Selection_CHUNCK; i++)
+            for (var i = 0; i < QuestionCount / databaseSelectionChunk; i++)
             {
-                List<Question> query = await _dbcontext.questions.Where(q => q.Lecture.Name == LectureName)
-                .Include(q => q.answers).OrderBy(q => q.Id)
-                .AsSplitQuery().Skip(i * database_Selection_CHUNCK).Take(database_Selection_CHUNCK).ToListAsync();
+                var query = await _dbcontext.questions
+                    .Where(q => q.Lecture.Name == lectureName)
+                    .Include(q => q.answers)
+                    .OrderBy(q => q.Id)
+                    .AsSplitQuery()
+                    .Skip(i * databaseSelectionChunk)
+                    .Take(databaseSelectionChunk)
+                    .ToListAsync();
+
                 result.AddRange(query);
             }
-            int skipLast = (int)database_Selection_CHUNCK * (int)(questionCount / database_Selection_CHUNCK);
-            int takeLast = (int)questionCount % database_Selection_CHUNCK;
-            List<Question> lastQuery = await _dbcontext.questions.Where(q => q.Lecture.Name == LectureName).OrderBy(q => q.Id)
-            .Include(q => q.answers)
-            .AsSplitQuery().Skip(skipLast).Take(takeLast).ToListAsync();
+
+            var skipLast = (int)databaseSelectionChunk * (int)(QuestionCount / databaseSelectionChunk);
+            var takeLast = (int)QuestionCount % databaseSelectionChunk;
+
+            var lastQuery = await _dbcontext.questions
+                .Where(q => q.Lecture.Name == lectureName)
+                .OrderBy(q => q.Id)
+                .Include(q => q.answers)
+                .AsSplitQuery()
+                .Skip(skipLast)
+                .Take(takeLast)
+                .ToListAsync();
+
             result.AddRange(lastQuery);
-
-            if (result is null) return new List<Question>();
             return result;
-
         }
         catch (Exception e)
         {
-            errors.Add(e.Message);
+            _errors.Add(e.Message);
             return new List<Question>();
         }
     }
 
     async Task<List<StudentQuestionAnswer>> GetStudentQuestionAnswers()
     {
-
         return await _dbcontext.studentQuestionAnswer
-        .Where(q => q.question.LectureId == lecture.Id
-                 && q.studentsId == studentUser.Id).ToListAsync();
-
+            .Where(q => q.question.LectureId == Lecture.Id
+                        && q.studentsId == StudentUser.Id).ToListAsync();
     }
+
     async Task DeleteQuestionsBySubject()
     {
         try
         {
-            // just delete the lecture and the questions will be deleted by cascade
+    // just delete the lecture and the questions will be deleted by cascade
             var qs = _dbcontext.lectures.FirstOrDefault(l => l.Name == LectureName);
-            _dbcontext.lectures.Remove(qs);
-            cache.Remove("subjects");
+            if (qs != null) _dbcontext.lectures.Remove(qs);
+            var subjectYear = _dbcontext.subjects.FirstOrDefault(s => s.Name == Subject)!.Year;
+            cache.Remove("subjects" + (int)subjectYear);
             cache.Remove("questionCount" + LectureName);
-            cache.Remove(LectureName);
+            cache.Remove('q' + LectureName);
             await _dbcontext.SaveChangesAsync();
             navigation.NavigateTo(navigation.BaseUri, true, true);
         }
         catch (Exception ex)
         {
-            errors.Add(ex.Message);
-            errors.Add(ex.InnerException?.Message);
+            _errors.Add(ex.Message);
+            _errors.Add(ex.InnerException?.Message);
         }
     }
 
@@ -208,16 +211,16 @@
         try
         {
             var qs = _dbcontext.studentQuestionAnswer.Where(sqa =>
-            sqa.studentsId == studentUser.Id
-            && sqa.question.Lecture.Name == LectureName).ToList();
+                sqa.studentsId == StudentUser.Id
+                && sqa.question.Lecture.Name == LectureName).ToList();
             _dbcontext.studentQuestionAnswer.RemoveRange(qs);
             await _dbcontext.SaveChangesAsync();
             navigation.NavigateTo(navigation.Uri, true, true);
         }
         catch (Exception ex)
         {
-            errors.Add(ex.Message);
-            errors.Add(ex.InnerException.Message);
+            _errors.Add(ex.Message);
+            if (ex.InnerException != null) _errors.Add(ex.InnerException.Message);
         }
     }
 

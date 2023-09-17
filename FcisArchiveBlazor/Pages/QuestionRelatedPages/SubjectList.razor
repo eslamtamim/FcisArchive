@@ -6,21 +6,21 @@
 
 
 <div>
-    @if (subjects is null)
+    @if (Subjects is null)
     {
-        <Loading />
+        <Loading/>
     }
-    else if (subjects!.Count() > 0)
+    else if (Subjects!.Any())
     {
         <div class="m-5 d-flex flex-wrap justify-content-sm-around align-content-center">
 
-            @foreach (var subject in subjects)
+            @foreach (var subject in Subjects)
             {
                 <div>
-                    <a class="btn btn-outline-secondary fw-bold m-2 p-2" href="/s/@year/@subject">
+                    <a class="btn btn-outline-secondary fw-bold m-2 p-2" href="/s/@Year/@subject">
                         @subject
                     </a>
-                    <br />
+                    <br/>
                 </div>
             }
         </div>
@@ -31,38 +31,49 @@
             No Subjects Yet
         </h4>
     }
+    @if (_errors.Any())
+    {
+        foreach (var error in _errors)
+        {
+            <p class="alert-danger">@error</p>
+        }
+    }
 </div>
-
 
 
 @code {
 
     [Parameter]
-    public int year { get; set; }
-    public List<string> subjects { get; set; }
-    List<string> errors = new List<string>();
-public AuthenticationState userAuth { get; set; }
+    public int Year { get; set; }
+
+    List<string> Subjects { get; set; }
+    readonly List<string> _errors = new();
+    public AuthenticationState UserAuth { get; set; }
+
     protected override Task OnInitializedAsync()
     {
         try
         {
-
-            string UserName = userAuth.User.Identity.Name;
-            StudentUser user = _dbcontext.Users.FirstOrDefault(s => s.UserName == UserName);
-            if (user is null) return base.OnInitializedAsync();
-            // cacheing the subjects for 1 day, if the cache is empty it will be filled
-            subjects = cache.GetOrCreate("subjects" + year, entry =>
+            if (UserAuth.User.Identity != null)
+            {
+                var userName = UserAuth.User.Identity.Name;
+                var user = _dbcontext.Users.FirstOrDefault(s => s.UserName == userName);
+                if (user is null) return base.OnInitializedAsync();
+            }
+    // caching the subjects for 1 day, if the cache is empty it will be filled
+            Subjects = cache.GetOrCreate("subjects" + Year, entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
-                return _dbcontext.subjects.Where(s => s.Year == (FCISQuestionsHub.Core.Models.Year)year).Select(s => s.Name).ToList();
+                return _dbcontext.subjects.Where(s => s.Year == (FCISQuestionsHub.Core.Models.Year)Year).Select(s => s.Name).ToList();
             });
         }
         catch (Exception e)
         {
-            errors.Add(e.Message);
-            errors.Add(e.ToString());
+            _errors.Add(e.Message);
+            _errors.Add(e.ToString());
         }
 
         return base.OnInitializedAsync();
     }
+
 }

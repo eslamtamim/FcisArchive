@@ -7,7 +7,6 @@
 @inject AuthenticationStateProvider GetAuthenticationStateAsync
 
 
-
 <div class="d-flex justify-content-between align-items-center">
     <h3>UploadDetails</h3>
     <button class="btn btn-danger" @onclick="DeleteUploadContent"> Delete The Changes From This Upload</button>
@@ -15,30 +14,29 @@
 
 @if (pdfUploads != null)
 {
-
     <h5 class="card-title">Upload Id: <span class="alert-warning">@pdfUploads.RequestId</span></h5>
     <h6 class="card-subtitle mb-2 text-muted">Uploaded in @pdfUploads.TimeUploaded.AddHours(3).ToShortDateString()</h6>
 
     <table class="table">
         <thead>
-            <tr>
-                <th scope="col">File Name</th>
-                <th scope="col">File Size</th>
-                <th scope="col">Details</th>
-            </tr>
+        <tr>
+            <th scope="col">File Name</th>
+            <th scope="col">File Size</th>
+            <th scope="col">Details</th>
+        </tr>
         </thead>
         <tbody>
-            @foreach (var file in pdfUploads.Files)
-            {
-                <tr>
-                    <td>@file.FileName</td>
-                    <td>@((file.FileSize) / (1024)) KB</td>
-                    <td>
-                        <a class="btn btn-outline-primary" href="/Upload/@RequestId/@file.FileId">Go to Details</a>
-                        <button class="btn btn-outline-danger" @onclick="()=>{DeleteFile(file);}">Delete File Questions</button>
-                    </td>
-                </tr>
-            }
+        @foreach (var file in pdfUploads.Files)
+        {
+            <tr>
+                <td>@file.FileName</td>
+                <td>@((file.FileSize) / (1024)) KB</td>
+                <td>
+                    <a class="btn btn-outline-primary" href="/Upload/@RequestId/@file.FileId">Go to Details</a>
+                    <button class="btn btn-outline-danger" @onclick="() => { DeleteFile(file); }">Delete File Questions</button>
+                </td>
+            </tr>
+        }
         </tbody>
     </table>
 }
@@ -52,17 +50,18 @@ else
 
     [Parameter]
     public string RequestId { get; set; }
+
     PdfUploads pdfUploads = new();
     public AuthenticationState userAuth { get; set; }
 
     protected override Task OnInitializedAsync()
     {
-        userAuth =  GetAuthenticationStateAsync.GetAuthenticationStateAsync().Result;
+        userAuth = GetAuthenticationStateAsync.GetAuthenticationStateAsync().Result;
 
         string UserName = userAuth.User.Identity?.Name;
         StudentUser user = _dbcontext.Users.FirstOrDefault(u => u.UserName == UserName);
         pdfUploads = _dbcontext.PdfUploads.Include(p => p.Files).FirstOrDefault(f => f.RequestId == RequestId && user.Id ==
-        f.UserId);
+                                                                                     f.UserId);
         return base.OnInitializedAsync();
     }
 
@@ -76,12 +75,9 @@ else
         foreach (var lecName in lecsNames)
         {
             var lec = _dbcontext.lectures.FirstOrDefault(q => q.Name == lecName);
-            if (lec != null)
-            {
-                _dbcontext.lectures.Remove(lec);
-                cache.Remove(lecName);
-
-            }
+            if (lec == null) continue;
+            _dbcontext.lectures.Remove(lec);
+            cache.Remove('q' + lecName);
         }
         _dbcontext.PdfUploads.Remove(pdfUploads);
         _dbcontext.SaveChanges();
@@ -90,14 +86,14 @@ else
 
     void DeleteFile(FileUpload file)
     {
-
         var lec = _dbcontext.lectures.FirstOrDefault(q => q.Name == GetNormalizedFileName(file.FileName));
         if (lec != null)
         {
             _dbcontext.lectures.Remove(lec);
             pdfUploads.Files.Remove(file);
         }
-        cache.Remove(GetNormalizedFileName(file.FileName));
+        var lectureName = GetNormalizedFileName(file.FileName);
+        cache.Remove('q'+ lectureName);
         _dbcontext.SaveChanges();
         StateHasChanged();
     }

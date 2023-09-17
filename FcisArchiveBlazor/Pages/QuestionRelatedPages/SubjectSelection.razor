@@ -3,13 +3,13 @@
 @inject IMemoryCache cache
 
 
-<h3>@subject</h3>
+<h3>@Subject</h3>
 
-@if(lectures is null)
+@if (_lectures is null)
 {
     <Loading/>
 }
-else if(lectures.Count() == 0)
+else if (!_lectures.Any())
 {
     <div class="alert alert-danger" role="alert">
         no lectures yet
@@ -18,30 +18,35 @@ else if(lectures.Count() == 0)
 else
 {
     <div class="d-flex flex-wrap justify-content-sm-around align-content-center">
-        @foreach (var lecture in lectures)
+        @foreach (var lecture in _lectures)
         {
-            <a class="btn btn-outline-secondary fw-bold m-2 p-2" href="/s/@subject/@lecture">
+            <a class="btn btn-outline-secondary fw-bold m-2 p-2" href="/s/@Subject/@lecture">
                 @lecture
             </a>
         }
     </div>
 }
 
+
+
 @code {
+
     [Parameter]
-    public string subject { get; set; }
+    public string Subject { get; set; }
+
     [Parameter]
-    public int year { get; set; }
-    List<string> lectures;
-    List<string> errors = new List<string>();
+    public int Year { get; set; }
+
+    List<string> _lectures;
 
     protected override Task OnInitializedAsync()
     {
-        lectures = cache.GetOrCreate(nameof(lectures)+subject, entry =>
+        _lectures = cache.GetOrCreate(nameof(_lectures) + Subject, entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
-            return _dbcontext.lectures.Where(l => l.Subject.Name == subject).Select(l => l.Name).ToList();
+            return _dbcontext.lectures.Where(l => l.Subject.Name == Subject).Select(l => l.Name).ToList();
         });
         return base.OnInitializedAsync();
     }
+
 }

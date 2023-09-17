@@ -13,69 +13,57 @@
 
         <div class="card mb-3 Qcard">
 
-            <EditForm OnValidSubmit="SubmitAddedQuestion" Context="editContext" Model="question">
-                <DataAnnotationsValidator />
+            <EditForm OnValidSubmit="SubmitAddedQuestion" Context="editContext" Model="Question">
+                <DataAnnotationsValidator/>
                 <div class="card-body">
                     <div class="d-flex gap-4 mb-4 justify-content-between align-items-center">
-                        <InputTextArea placeholder="Question Text" @bind-Value="@question.Text" class="card-title w-100 form-control-lg fw-bolder alertinfo d-inline"></InputTextArea>
-                        <br />
-                        <ValidationMessage For="() => question.Text" />
+                        <InputTextArea placeholder="Question Text" @bind-Value="@Question.Text" class="card-title w-100 form-control-lg fw-bolder alertinfo d-inline"></InputTextArea>
+                        <br/>
+                        <ValidationMessage For="() => Question.Text"/>
                     </div>
                     <div class="d-flex justify-content-between mx">
                         <div>
 
                             <label>Change Question Photo</label>
-                            <InputFile OnChange="SavePhoto" class="form-control form-control m-3 mb-4" />
+                            <InputFile OnChange="SavePhoto" class="form-control form-control m-3 mb-4"/>
 
                             <div>
-                                @if (question.answers.Any())
+                                @if (Question.answers.Any())
                                 {
-
-                                    @foreach (var ans in question.answers)
+                                    @foreach (var ans in Question.answers)
                                     {
-
                                         <div class="d-flex justify-content-around align-items-center">
                                             <div class="card mx-4 my-3">
                                                 <div class="card-body">
                                                     <InputText @bind-Value="@ans.Text" placeholder="Answer Text" class="form-control fw-bold"></InputText>
-                                                    <ValidationMessage For="() => ans.Text" />
+                                                    <ValidationMessage For="() => ans.Text"/>
 
                                                 </div>
                                             </div>
                                             @if (ans.IsCorrect)
                                             {
                                                 <input type="radio" class="form-check-input" name="ansCorrecties" checked value="@ans.IsCorrect"
-                                                @onclick="()=>{
-                                            question.answers.FirstOrDefault(a=>a.IsCorrect).IsCorrect = false;
-                                            ans.IsCorrect = true;}" />
+                                                       @onclick="() => { MakeAnswerCorrect(ans); }"/>
                                             }
                                             else
                                             {
                                                 <input type="radio" class="form-check-input" name="ansCorrecties" value="@ans.IsCorrect"
-                                                @onclick="()=>{
-                                            var correct = question.answers.FirstOrDefault(a=>a.IsCorrect);
-                                            if(correct is not null)correct.IsCorrect = false;
-                                            ans.IsCorrect = true;}" />
+                                                       @onclick="() => { MakeAnswerCorrectIfNotCorrect(ans); }"/>
                                             }
-                                            <ValidationMessage For="() => ans.IsCorrect" />
+                                            <ValidationMessage For="() => ans.IsCorrect"/>
 
-                                            <div class="m-4 btn btn-danger" @onclick="()=>question.answers.Remove(ans)">x</div>
+                                            <div class="m-4 btn btn-danger" @onclick="() => Question.answers.Remove(ans)">x</div>
                                         </div>
-
                                     }
-
                                 }
                                 <button class="btn btn-outline-secondary m-4 px-xxl-4"
-                                @onclick="()=>{
-                            question.answers.Add(new Answer());
-                            StateHasChanged();
-                            }">
+                                        @onclick="() =>{ Question.answers.Add(new Answer()); StateHasChanged(); }">
                                     + Create Answer
                                 </button>
 
 
                                 <div class="m-4">
-                                    <InputText @bind-Value="@question.Hint" placeholder="Add Hint" class="form-control d-inline fw-bolder"></InputText>
+                                    <InputText @bind-Value="@Question.Hint" placeholder="Add Hint" class="form-control d-inline fw-bolder"></InputText>
 
                                 </div>
 
@@ -85,20 +73,19 @@
                         </div>
                         <div>
 
-                            @if (question.Photo is not null)
+                            @if (Question.Photo is not null)
                             {
-                                <img src="@question.Photo" width="400" title="QuestionPhoto" alt="QuestionPhoto" />
+                                <img src="@Question.Photo" width="400" title="QuestionPhoto" alt="QuestionPhoto"/>
 
-                                <br />
+                                <br/>
 
-                                <br />
+                                <br/>
 
-                                <div @onclick="() => {question.Photo = null;}" class="btn btn-danger">delete photo</div>
+                                <div @onclick="() => { Question.Photo = null; }" class="btn btn-danger">delete photo</div>
                             }
                             else
                             {
-                                <img class="d-block" src="QuestionsPhotos/404notfound.png" width="400" title="QuestionPhoto" alt="404NOTFoundPhoto" />
-
+                                <img class="d-block" src="QuestionsPhotos/404notfound.png" width="400" title="QuestionPhoto" alt="404NOTFoundPhoto"/>
                             }
                         </div>
 
@@ -106,25 +93,25 @@
                     <div class="m-4">
 
                         <lable class="fw-bold m-2"> Set The Subject of The Question </lable>
-                        <select value="@question.SubjectId" @onchange="GetLectures" class="form-control w-25 fw-bold">
-                            @foreach (var sub in subjects)
+                        <select value="@Question.SubjectId" @onchange="GetLectures" class="form-control w-25 fw-bold">
+                            @foreach (var sub in Subjects)
                             {
-                                <option value="@sub.id"> @sub.Name </option>
+                                <option value="@sub.Id"> @sub.Name </option>
                             }
                         </select>
-                        <ValidationMessage For="() => question.SubjectId" />
+                        <ValidationMessage For="() => Question.SubjectId"/>
 
                     </div>
 
                     <div class="m-4">
 
                         <lable class="fw-bold m-2"> Set The Lecture of The Subject </lable>
-                        <InputSelect @bind-Value="@question.LectureId" class="form-control w-25 fw-bold">
-                            @if (lectuers is not null)
+                        <InputSelect @bind-Value="@Question.LectureId" class="form-control w-25 fw-bold">
+                            @if (Lectures is not null)
                             {
-                                @foreach (var lec in lectuers)
+                                @foreach (var lec in Lectures)
                                 {
-                                    <option value="@lec.id"> @lec.Name </option>
+                                    <option value="@lec.Id"> @lec.Name </option>
                                 }
                             }
                             else
@@ -133,7 +120,7 @@
                                 <option value="0"> Select Subject First </option>
                             }
                         </InputSelect>
-                        <ValidationMessage For="() => question.LectureId" />
+                        <ValidationMessage For="() => Question.LectureId"/>
 
                     </div>
 
@@ -154,30 +141,33 @@
 
 @code {
 
-    record SubjectDTO(int id, string Name);
-    record LectureDTO(int id, string Name);
+    record SubjectDTO(int Id, string Name);
+
+    record LectureDTO(int Id, string Name);
 
 
-    public Question question { get; set; } = new();
-    List<SubjectDTO> subjects { get; set; } = new();
-    List<LectureDTO> lectuers { get; set; }
-    SubjectDTO subjectDTO { get; set; }
-    LectureDTO lectureDTO { get; set; }
-    public string statePhoto { get; set; }
-    public bool editMood { get; set; }
+    public Question Question { get; set; } = new();
+    List<SubjectDTO> Subjects { get; set; } = new();
+    List<LectureDTO> Lectures { get; set; }
+    SubjectDTO SubjectDto { get; set; }
+    LectureDTO LectureDto { get; set; }
+    public string StatePhoto { get; set; }
+    public bool EditMood { get; set; }
 
     protected override Task OnParametersSetAsync()
     {
-        question.answers = new();
-        question.answers.Add(new Answer());
-        question.answers.Add(new Answer());
+        Question.answers = new List<Answer>
+        {
+            new Answer(),
+            new Answer()
+        };
         return base.OnParametersSetAsync();
     }
 
     protected override async Task OnInitializedAsync()
     {
-        subjects = _dbcontext.subjects.Select(q => new SubjectDTO(q.Id, q.Name)).Distinct().ToList();
-        subjects.Insert(0, new SubjectDTO(0, ""));
+        Subjects = _dbcontext.subjects.Select(q => new SubjectDTO(q.Id, q.Name)).Distinct().ToList();
+        Subjects.Insert(0, new SubjectDTO(0, ""));
         await base.OnInitializedAsync();
     }
 
@@ -185,61 +175,74 @@
     {
         try
         {
-
-            await _dbcontext.AddAsync<Question>(question);
+            await _dbcontext.AddAsync<Question>(Question);
             await _dbcontext.SaveChangesAsync();
-            subjectDTO = subjects.FirstOrDefault(s => s.id == question.SubjectId);
-            lectureDTO = lectuers.FirstOrDefault(l => l.id == question.LectureId);
-            cache.Remove(lectureDTO.Name);
-            cache.Remove("questionCount" + lectureDTO.Name);
-            clearIndexCache();
-            if (question.Photo is not null)
+            SubjectDto = Subjects.FirstOrDefault(s => s.Id == Question.SubjectId);
+            LectureDto = Lectures.FirstOrDefault(l => l.Id == Question.LectureId);
+            if (LectureDto is null) return;
+            cache.Remove('q' + LectureDto.Name);
+            cache.Remove("questionCount" + LectureDto.Name);
+            ClearIndexCache();
+            if (Question.Photo is not null)
             {
-                string filePath = Path.Combine("wwwroot", "QuestionsPhotos", $"QuestionPhoto-0{question.Photo[question.Photo.LastIndexOf('.')..]}");
-                question.Photo = Path.Combine("QuestionsPhotos", $"QuestionPhoto-{question.Id}{question.Photo[question.Photo.LastIndexOf('.')..]}");
-                File.Move(filePath, "wwwroot\\" + question.Photo);
+                var filePath = Path.Combine("wwwroot", "QuestionsPhotos", $"QuestionPhoto-0{Question.Photo[Question.Photo.LastIndexOf('.')..]}");
+                Question.Photo = Path.Combine("QuestionsPhotos", $"QuestionPhoto-{Question.Id}{Question.Photo[Question.Photo.LastIndexOf('.')..]}");
+                File.Move(filePath, "wwwroot\\" + Question.Photo);
                 await _dbcontext.SaveChangesAsync();
             }
-            nav.NavigateTo(nav.BaseUri + $"s/{subjectDTO.Name}/{lectureDTO.Name}#{question.Id}", false, true);
+            if (SubjectDto is not null) nav.NavigateTo(nav.BaseUri + $"s/{SubjectDto.Name}/{LectureDto.Name}#{Question.Id}", false, true);
+            else nav.NavigateTo(nav.BaseUri);
         }
-        catch
+        catch (Exception ex)
         {
-
+    // ignored
         }
-
     }
 
 
     void GetLectures(ChangeEventArgs e)
     {
-
-        question.SubjectId = int.Parse(e.Value.ToString());
-        lectuers = _dbcontext.lectures.Where(q => q.SubjectId == question.SubjectId).Select(q => new LectureDTO(q.Id, q.Name)).Distinct().ToList();
-        lectuers.Insert(0, new LectureDTO(0, ""));
+        if (e.Value != null) Question.SubjectId = int.Parse(e.Value.ToString() ?? string.Empty);
+        Lectures = _dbcontext.lectures.Where(q => q.SubjectId == Question.SubjectId).Select(q => new LectureDTO(q.Id, q.Name)).Distinct().ToList();
+        Lectures.Insert(0, new LectureDTO(0, ""));
         StateHasChanged();
     }
+
     async void SavePhoto(InputFileChangeEventArgs input)
     {
         IBrowserFile file = input.File;
-        long MAX_FILE_SIZE = 1024 * 1024 * 5;
+        const long maxFileSize = 1024 * 1024 * 5;
 
         if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "QuestionsPhotos")))
         {
             Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "QuestionsPhotos"));
         }
-        string filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "QuestionsPhotos", $"QuestionPhoto-{question.Id}{file.Name[file.Name.LastIndexOf('.')..]}");
+        string filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "QuestionsPhotos", $"QuestionPhoto-{Question.Id}{file.Name[file.Name.LastIndexOf('.')..]}");
         await using FileStream fs = new(filePath, FileMode.Create);
-        await file.OpenReadStream(MAX_FILE_SIZE).CopyToAsync(fs);
-        question.Photo = Path.Combine("QuestionsPhotos", $"QuestionPhoto-{question.Id}{file.Name[file.Name.LastIndexOf('.')..]}");
+        await file.OpenReadStream(maxFileSize).CopyToAsync(fs);
+        Question.Photo = Path.Combine("QuestionsPhotos", $"QuestionPhoto-{Question.Id}{file.Name[file.Name.LastIndexOf('.')..]}");
         this.StateHasChanged();
     }
 
 
-    void clearIndexCache()
+    void MakeAnswerCorrect(Answer ans)
+    {
+        Question.answers.FirstOrDefault(a => a.IsCorrect)!.IsCorrect = false;
+        ans.IsCorrect = true;
+    }
+
+    void MakeAnswerCorrectIfNotCorrect(Answer ans)
+    {
+        var correct = Question.answers.FirstOrDefault(a => a.IsCorrect);
+        if (correct is not null) correct.IsCorrect = false;
+        ans.IsCorrect = true;
+    }
+
+    void ClearIndexCache()
     {
         cache.Remove("years");
-        cache.Remove("subjects");
-        cache.Remove("lectuers");
+        cache.Remove("subjects" + Question.Subject.Year);
+        cache.Remove("lectures" + Question.Subject.Name);
     }
-}
 
+}

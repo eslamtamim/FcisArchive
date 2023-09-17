@@ -50,7 +50,7 @@
     </header>
 
     <div class="container">
-        <partial name="_CookieConsentPartial" optional />
+        @* <partial name="_CookieConsentPartial" optional /> *@
         <main role="main" class="pb-1">
             @RenderBody()
         </main>
@@ -79,7 +79,7 @@
                 crossorigin="anonymous"
                 integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj">
         </script>
-        <script src="~/Identity/js/site.js" asp-append-version="true"></script>
+        @* <script src="~/Identity/js/site.js" asp-append-version="true"></script> *@
     </environment>
 
     @await RenderSectionAsync("Scripts", required: false)
