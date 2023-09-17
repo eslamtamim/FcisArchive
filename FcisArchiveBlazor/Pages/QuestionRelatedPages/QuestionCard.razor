@@ -166,7 +166,7 @@ else
                         Lec @question.Lecture.Name
                     </p>
                     <p class="small" style="margin-bottom: 4px">
-                        Question ID : @question.Id, Author : @question.AuthorName
+                        Question ID : @question.Id | @(question.QuestionType == 0 ? "MCQ" : "True & False") | Author : @question.AuthorName
                     </p>
                 </div>
                 <div class="d-flex justify-content-between gap-1 align-items-center">

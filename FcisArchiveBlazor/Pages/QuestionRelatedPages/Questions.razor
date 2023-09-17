@@ -14,7 +14,7 @@
         <AuthorizeView>
             <div>
                 <button class="btn d-inline btn-warning" @onclick="ResetQuestionsAnswers">Reset All Answers</button>
-                <AuthorizeView Context ="childContext" Roles="Super-Admin, Admin">
+                <AuthorizeView Context="childContext" Roles="Super-Admin, Admin">
                     <button class="btn d-inline btn-danger" @onclick="DeleteQuestionsBySubject">Delete This Lecute</button>
                 </AuthorizeView>
             </div>
@@ -80,13 +80,16 @@
     [Parameter]
     public string subject { get; set; }
 
+    //public record StudentAnswersDTO(string StudentId, long questionId, long answerId);
 
     public List<Question> filterdQuestions { get; set; }
     public List<StudentQuestionAnswer> studentAnswers { get; set; } = new();
+
     public Dictionary<long, StudentQuestionAnswer> findStudentAnswer { get; set; } = new();
     public List<string> errors = new List<string>();
     public AuthenticationState userAuth { get; set; }
     public StudentUser studentUser { get; set; }
+    Lecture lecture { get; set; }
     public long questionCount { get; set; }
     public string userName { get; set; }
 
@@ -104,7 +107,7 @@
         else
         {
             studentUser = await userManager.FindByNameAsync(userName);
-
+            lecture = await _dbcontext.lectures.FirstOrDefaultAsync(l => l.Name == LectureName);
             studentAnswers = await GetStudentQuestionAnswers();
 
             foreach (var sq in studentAnswers) findStudentAnswer[sq.questionId] = sq;
@@ -175,10 +178,9 @@
     async Task<List<StudentQuestionAnswer>> GetStudentQuestionAnswers()
     {
 
-        return await _dbcontext.studentQuestionAnswer.Include(sqa => sqa.question)
-        .Include(sqa => sqa.student)
-        .Where(q => q.question.Lecture.Name == LectureName
-        && q.student.Id == studentUser.Id).ToListAsync();
+        return await _dbcontext.studentQuestionAnswer
+        .Where(q => q.question.LectureId == lecture.Id
+                 && q.studentsId == studentUser.Id).ToListAsync();
 
     }
     async Task DeleteQuestionsBySubject()
