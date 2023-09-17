@@ -1,4 +1,5 @@
 ﻿@page "/s/{subject}/{LectureName}"
+@using Microsoft.AspNetCore.WebUtilities
 
 @inject UserManager<StudentUser> userManager
 @inject SignInManager<StudentUser> signInManager
@@ -11,6 +12,11 @@
 
     <div class="d-flex align-content-between justify-content-between">
         <h1 class="fw-bold">@LectureName.Replace('-', ' ').Replace("Lec", "Lecture")</h1>
+        <div>
+            <button class="btn btn-outline-primary" @onclick="() => QuestionsByType(null)">All</button>
+            <button class="btn btn-outline-secondary" @onclick="() => QuestionsByType(QuestionType.MCQ)">MCQ</button>
+            <button class="btn btn-outline-secondary" @onclick="() => QuestionsByType(QuestionType.TrueFalse)">T&F</button>
+        </div>
         <AuthorizeView>
             <div>
                 <button class="btn d-inline btn-warning" @onclick="ResetQuestionsAnswers">Reset All Answers</button>
@@ -31,7 +37,7 @@
             <p class="my-0 text-danger">@error</p>
         }
     }
-    @if (FilteredQuestions is null)
+    @if (FilteredQuestions is null || isLoading)
     {
         <Loading/>
     }
@@ -43,7 +49,7 @@
     }
     else
     {
-        <div class="d-flex @(_errors.Count > 0 ? "justify-content-between" : "justify-content-end") ">
+        <div class="d-flex align-items-center  @(_errors.Count > 0 ? "justify-content-between" : "justify-content-between") ">
             @if (_errors.Count > 0)
             {
                 <div class="d-flex m-3">
@@ -51,6 +57,17 @@
                     <a class="btn btn-outline-secondary " href="Account/Login">Log in</a>
                 </div>
             }
+        </div>
+        <div class="pagesAndCount d-flex justify-content-between align-items-center">
+            <div class="d-flex m-4 justify-content-center align-content-center gap-2 align-items-center flex-wrap">
+
+                @foreach (var currentPage in Enumerable.Range(1, (int)pages))
+                {
+                    <button class=" btn @(page  == currentPage ? "btn-secondary" : "btn-outline-secondary")"  @onclick="() => { SetPage(currentPage); }">
+                        @currentPage.ToString()
+                    </button>
+                }
+            </div>
             <p style="font-size: 25px " class="fw-bolder">
                 Amount of Questions :
                 <span class="alert-info">
@@ -65,6 +82,7 @@
                           StudentUser="@StudentUser"/>
         }
     }
+
 
 </div>
 
@@ -87,15 +105,30 @@
     AuthenticationState UserAuth { get; set; }
     StudentUser StudentUser { get; set; }
     Lecture Lecture { get; set; }
+    int page = 1;
+    decimal pages = 1;
+        const int DatabaseSelectionChunk = 20;
+    bool isLoading = false;
     long QuestionCount { get; set; }
     string UserName { get; set; }
 
+
     protected override async Task OnInitializedAsync()
     {
+        var uri = navigation.ToAbsoluteUri(navigation.Uri);
+        var queryStrings = QueryHelpers.ParseQuery(uri.Query);
+        if (queryStrings.TryGetValue("page", out var currentPage))
+        {
+            page = int.TryParse(currentPage, out var result) ? result : 1;
+            if (page < 1) page = 1;
+        }
+        else
+        {
+            navigation.NavigateTo(navigation.Uri + $"?page={page}", true);
+        }
+
         UserAuth = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
-
         if (UserAuth.User.Identity != null) UserName = UserAuth.User.Identity.Name;
-
         if (UserName is null)
         {
             _errors.Add("you are not logged in");
@@ -108,21 +141,19 @@
             StudentAnswers = await GetStudentQuestionAnswers();
             foreach (var sq in StudentAnswers) FindStudentAnswer[sq.questionId] = sq;
         }
-
+    //cache the question count for 1 day
         QuestionCount = cache.GetOrCreate<long>("questionCount" + LectureName, entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
             return _dbcontext.questions.LongCount(q => q.Lecture.Name == LectureName);
         });
-        
-        FilteredQuestions = await cache.GetOrCreateAsync('q'+LectureName, async entry =>
+        pages = (decimal)QuestionCount / DatabaseSelectionChunk;
+        pages = Math.Ceiling(pages);
+        FilteredQuestions = await cache.GetOrCreateAsync($"p{page}" + LectureName, async entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
             return await GetQuestions(LectureName);
         });
-       
-
-    //cache the question count for 1 day
 
 
         await base.OnInitializedAsync();
@@ -140,35 +171,33 @@
 
 
             List<Question> result = new();
-            const int databaseSelectionChunk = 300;
 
-            for (var i = 0; i < QuestionCount / databaseSelectionChunk; i++)
-            {
-                var query = await _dbcontext.questions
-                    .Where(q => q.Lecture.Name == lectureName)
-                    .Include(q => q.answers)
-                    .OrderBy(q => q.Id)
-                    .AsSplitQuery()
-                    .Skip(i * databaseSelectionChunk)
-                    .Take(databaseSelectionChunk)
-                    .ToListAsync();
 
-                result.AddRange(query);
-            }
-
-            var skipLast = (int)databaseSelectionChunk * (int)(QuestionCount / databaseSelectionChunk);
-            var takeLast = (int)QuestionCount % databaseSelectionChunk;
-
-            var lastQuery = await _dbcontext.questions
+            var query = await _dbcontext.questions
                 .Where(q => q.Lecture.Name == lectureName)
-                .OrderBy(q => q.Id)
                 .Include(q => q.answers)
+                .OrderBy(q => q.Id)
                 .AsSplitQuery()
-                .Skip(skipLast)
-                .Take(takeLast)
+                .Skip((page - 1) * DatabaseSelectionChunk)
+                .Take(DatabaseSelectionChunk)
                 .ToListAsync();
 
-            result.AddRange(lastQuery);
+            result.AddRange(query);
+
+
+    // var skipLast = (int)databaseSelectionChunk * (int)(QuestionCount / databaseSelectionChunk);
+    // var takeLast = (int)QuestionCount % databaseSelectionChunk;
+    //
+    // var lastQuery = await _dbcontext.questions
+    //     .Where(q => q.Lecture.Name == lectureName)
+    //     .OrderBy(q => q.Id)
+    //     .Include(q => q.answers)
+    //     .AsSplitQuery()
+    //     .Skip(skipLast)
+    //     .Take(takeLast)
+    //     .ToListAsync();
+    //
+    // result.AddRange(lastQuery);
             return result;
         }
         catch (Exception e)
@@ -194,6 +223,7 @@
             if (qs != null) _dbcontext.lectures.Remove(qs);
             var subjectYear = _dbcontext.subjects.FirstOrDefault(s => s.Name == Subject)!.Year;
             cache.Remove("subjects" + (int)subjectYear);
+            cache.Remove("lectures" + Subject);
             cache.Remove("questionCount" + LectureName);
             cache.Remove('q' + LectureName);
             await _dbcontext.SaveChangesAsync();
@@ -204,6 +234,39 @@
             _errors.Add(ex.Message);
             _errors.Add(ex.InnerException?.Message);
         }
+    }
+
+    async Task QuestionsByType(QuestionType? type)
+    {
+        isLoading = true;
+        QuestionCount = cache.GetOrCreate<long>("questionCount" + LectureName, entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
+            return _dbcontext.questions.LongCount(q => q.Lecture.Name == LectureName);
+        });
+        FilteredQuestions = await cache.GetOrCreateAsync('q' + LectureName, async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
+            return await GetQuestions(LectureName);
+        });
+
+        if (type is null)
+        {
+            StudentAnswers = await GetStudentQuestionAnswers();
+            isLoading = false;
+            StateHasChanged();
+            return;
+        }
+
+        StudentAnswers = await _dbcontext.studentQuestionAnswer
+            .Where(q => q.question.LectureId == Lecture.Id
+                        && q.studentsId == StudentUser.Id
+                        && q.question.QuestionType == type).ToListAsync();
+
+        FilteredQuestions = FilteredQuestions.Where(q => q.QuestionType == type).ToList();
+        QuestionCount = FilteredQuestions.Count;
+        isLoading = false;
+        StateHasChanged();
     }
 
     async Task ResetQuestionsAnswers()
@@ -224,4 +287,14 @@
         }
     }
 
+    void SetPage(int currentPage)
+    {
+        var queryParams = new Dictionary<string, string>
+        {
+            ["page"] = currentPage.ToString()
+        };
+        navigation.NavigateTo(QueryHelpers.AddQueryString($"/s/{Subject}/{LectureName}", queryParams), true);
+    }
+
 }
+

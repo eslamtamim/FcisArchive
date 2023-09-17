@@ -6,18 +6,18 @@
 @inject AuthenticationStateProvider GetAuthenticationStateAsync
 
 
-@if (fileUpload != null)
+@if (_fileUpload != null)
 {
-    <h3 class="card-title">File Name: <span class="">@fileUpload.FileName</span></h3>
+    <h3 class="card-title">File Name: <span class="">@_fileUpload.FileName</span></h3>
 
-    <h5 class="card-title">File Id: <span class="alert-warning">@fileUpload.FileId</span></h5>
+    <h5 class="card-title">File Id: <span class="alert-warning">@_fileUpload.FileId</span></h5>
     <h6 class="card-title">
-        Uploaded via Request: <span class="alert-warning">@fileUpload.PdfUpload.RequestId</span> in
-        @fileUpload.PdfUpload.TimeUploaded.AddHours(3).ToShortDateString()
+        Uploaded via Request: <span class="alert-warning">@_fileUpload.PdfUpload.RequestId</span> in
+        @_fileUpload.PdfUpload.TimeUploaded.AddHours(3).ToShortDateString()
     </h6>
 
     <h3>File Errors</h3>
-    if (fileUpload.FileErrors.Count() > 0)
+    if (_fileUpload.FileErrors.Any())
     {
         <table class="table">
             <thead>
@@ -27,7 +27,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var error in fileUpload.FileErrors)
+                @foreach (var error in _fileUpload.FileErrors)
                 {
                     <tr class="text-danger">
                         <td>@error.ErrorMessage</td>
@@ -53,16 +53,17 @@ else
     public string RequestId { get; set; }
     [Parameter]
     public int FileId { get; set; }
-    public AuthenticationState userAuth { get; set; }
-
-    FileUpload fileUpload = new();
+    
+    AuthenticationState UserAuth { get; set; }
+    FileUpload _fileUpload = new();
 
     protected override Task OnInitializedAsync()
     {
-        userAuth = GetAuthenticationStateAsync.GetAuthenticationStateAsync().Result;
-        string UserName = userAuth.User.Identity.Name;
-        StudentUser user = _dbcontext.Users.FirstOrDefault(u => u.UserName == UserName);
-        fileUpload = _dbcontext.FileUploads.FirstOrDefault(f => f.PdfUpload.UserId == user.Id && f.FileId == FileId);
+        UserAuth = GetAuthenticationStateAsync.GetAuthenticationStateAsync().Result;
+        if (UserAuth.User.Identity is null) return base.OnInitializedAsync();
+        var userName = UserAuth.User.Identity.Name;
+        var user = _dbcontext.Users.FirstOrDefault(u => u.UserName == userName);
+        _fileUpload = _dbcontext.FileUploads.FirstOrDefault(f => f.PdfUpload.UserId == user.Id && f.FileId == FileId);
         return base.OnInitializedAsync();
     }
 

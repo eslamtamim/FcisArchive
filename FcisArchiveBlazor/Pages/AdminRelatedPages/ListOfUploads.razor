@@ -6,26 +6,26 @@
 @inject AuthenticationStateProvider GetAuthenticationStateAsync
 
 
-
 <h3 class="m-4">ListOfUploads</h3>
-@if (uploads is not null)
+@if (_uploads is not null)
 {
-
     <div class="col-12">
 
         <div class="d-flex justify-content-around align-items-center gap-2  flex-wrap">
 
-            @if (uploads.Count() > 0)
+            @if (_uploads.Count > 0)
             {
-                foreach (var upload in uploads)
+                foreach (var upload in _uploads)
                 {
                     <a class="card my-2 btn" style="width: 19rem;" href="/Upload/@upload.RequestId">
 
                         <div class="card-body">
                             <h5 class="my-3 card-title">Upload Id: <span class="alert-warning">@upload.RequestId</span></h5>
 
-                            <h6 class="card-subtitle mb-2 text-muted">Uploaded at @upload.TimeUploaded.AddHours(3).ToShortTimeString() 
-                                in @upload.TimeUploaded.ToShortDateString()</h6>
+                            <h6 class="card-subtitle mb-2 text-muted">
+                                Uploaded at @upload.TimeUploaded.AddHours(3).ToShortTimeString()
+                                in @upload.TimeUploaded.ToShortDateString()
+                            </h6>
                             @* <p class="card-text">
                                 Some Of The Upload Content
                                 <ul>
@@ -39,7 +39,6 @@
                             </p> *@
                         </div>
                     </a>
-
                 }
             }
 
@@ -50,32 +49,34 @@
 
 else
 {
-    <Loading />
+    <Loading/>
 }
 
 @code {
 
-    List<PdfUploads> uploads;
-    Exception exception;
-    public AuthenticationState userAuth { get; set; }
+    List<PdfUploads> _uploads;
+    Exception _exception;
+    AuthenticationState UserAuth { get; set; }
 
     protected override Task OnInitializedAsync()
     {
         try
         {
-            userAuth = GetAuthenticationStateAsync.GetAuthenticationStateAsync().Result;
-            string UserName = userAuth.User.Identity?.Name;
-            StudentUser user = _dbcontext.Users.FirstOrDefault(u => u.UserName == UserName);
-            uploads = _dbcontext.PdfUploads.Where(pdf => pdf.UserId == user.Id).OrderByDescending(f => f.TimeUploaded).ToList();
+            UserAuth = GetAuthenticationStateAsync.GetAuthenticationStateAsync().Result;
+            var userName = UserAuth.User.Identity?.Name;
+            var user = _dbcontext.Users.FirstOrDefault(u => u.UserName == userName);
+            
+            _uploads = _dbcontext.PdfUploads.Where(pdf => pdf.UserId == user.Id)
+                .OrderByDescending(f => f.TimeUploaded)
+                .ToList();
             return base.OnInitializedAsync();
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            exception = ex;
+            _exception = ex;
         }
-      
-        return base.OnInitializedAsync();
 
+        return base.OnInitializedAsync();
     }
 
 }

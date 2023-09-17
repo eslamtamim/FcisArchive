@@ -6,33 +6,29 @@
 @inject ApplicationDbContext _dbcontext
 
 
-
-
 <AuthorizeView>
     <Authorized>
         <h3>Manage Roles</h3>
 
         <div class="d-flex justify-content-around">
 
-            <EditForm Context="EditContext" Model="roleDTO" OnValidSubmit="AddRole">
-                <DataAnnotationsValidator />
-
-
+            <EditForm Context="editContext" Model="_RoleDto" OnValidSubmit="AddRole">
+                <DataAnnotationsValidator/>
                 <div class="card" style="width: 18rem;">
                     <div class="card-body">
                         <label>Role Name</label>
-                        <InputText class="form-control" @bind-Value="roleDTO.roleName"></InputText>
-                        <ValidationMessage For="() => roleDTO.roleName" />
-                        <br />
+                        <InputText class="form-control" @bind-Value="_RoleDto.RoleName"></InputText>
+                        <ValidationMessage For="() => _RoleDto.RoleName"/>
+                        <br/>
                         <button type="submit" class="btn btn-primary">Submit Role</button>
                     </div>
                 </div>
 
                 <div>
-                    @if (savedChanges.Any())
+                    @if (SavedChanges.Any())
                     {
                         <ul>
-                            <li class="m-1 d-inline-block alert-success">@savedChanges.Last()</li>
+                            <li class="m-1 d-inline-block alert-success">@SavedChanges.Last()</li>
                         </ul>
                     }
                 </div>
@@ -43,18 +39,17 @@
 
                 @foreach (var role in Roles)
                 {
-
                     <div class="bg-gradient bg-warning bg-opacity-25">
 
                         <div class="m-2">
 
                             @if (InEditMood)
                             {
-                                <EditForm Model="role" Context="RoleContext" OnValidSubmit="async ()=>{InEditMood = !InEditMood;await UpdateRole(role);}">
-                                    <DataAnnotationsValidator />
+                                <EditForm Model="role" Context="roleContext" OnValidSubmit="async () =>{InEditMood = !InEditMood;await UpdateRole(role);}">
+                                    <DataAnnotationsValidator/>
                                     <InputText class="form-control" @bind-Value="@role.Name"></InputText>
 
-                                    <ValidationMessage For="()=> roleDTO.roleName" />
+                                    <ValidationMessage For="() => _RoleDto.RoleName"/>
                                 </EditForm>
                             }
                             else
@@ -65,9 +60,9 @@
 
                         <div>
 
-                            <button class="btn btn-danger" @onclick="async ()=>{await DeleteRole(role);}">Delete Role</button>
-                            <button class="btn btn-secondary" @onclick="()=>{InEditMood = !InEditMood;}">Update Role</button>
-                            <button class="btn btn-outline-primary" @onclick="async()=>{await ShowRole(role);}">Role Details</button>
+                            <button class="btn btn-danger" @onclick="async () => { await DeleteRole(role); }">Delete Role</button>
+                            <button class="btn btn-secondary" @onclick="() => { InEditMood = !InEditMood; }">Update Role</button>
+                            <button class="btn btn-outline-primary" @onclick="async () => { await ShowRole(role); }">Role Details</button>
                         </div>
                     </div>
                 }
@@ -78,9 +73,9 @@
 
         <div>
 
-            @if (errors.Any())
+            @if (Errors.Any())
             {
-                foreach (var error in errors)
+                foreach (var error in Errors)
                 {
                     <p class="text-danger"> @error.Message</p>
                     <div class="text-danger"> @error.InnerException</div>
@@ -89,20 +84,20 @@
 
         </div>
 
-        @if (role is not null)
+        @if (Role is not null)
         {
             <div class="my-5 mx-2">
 
-                <p>role ID : @role.Id</p>
-                <h3>@role.Name Role</h3>
+                <p>role ID : @Role.Id</p>
+                <h3>@Role.Name Role</h3>
 
-                <EditForm Model="user" Context="userContext" OnValidSubmit="AddUserRole">
+                <EditForm Model="_User" Context="userContext" OnValidSubmit="AddUserRole">
                     <label>add users to this Role</label>
-                    <InputSelect class="form-select" @bind-Value="this.user.id">
+                    <InputSelect class="form-select" @bind-Value="_User.Id">
                         <option value=""></option>
-                        @foreach (var user in users)
+                        @foreach (var user in Users)
                         {
-                            <option value="@user.id">@user.username</option>
+                            <option value="@user.Id">@user.Username</option>
                         }
                     </InputSelect>
                     <button class="btn btn-primary my-2" type="submit">Add User</button>
@@ -111,26 +106,26 @@
 
                 <table class="table">
                     @{
-                        int num = 1;
+                        var num = 1;
                     }
                     <thead>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">UserName</th>
-                            <th scope="col">ID</th>
-                            <th scope="col">Actions</th>
-                        </tr>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">UserName</th>
+                        <th scope="col">ID</th>
+                        <th scope="col">Actions</th>
+                    </tr>
                     </thead>
-                    @foreach (var user in roleUsers)
+                    @foreach (var user in RoleUsers)
                     {
                         <tr>
                             <th scope="row">@(num++)</th>
-                            <td>@user.username</td>
-                            <td>@user.id</td>
+                            <td>@user.Username</td>
+                            <td>@user.Id</td>
                             <td>
-                                <button @onclick="async()=> {await DeleteUserRole(
-                                        new IdentityUserRole<string>(){RoleId= role.Id,UserId = user.id});}"
-                                        class="btn w-50 btn-outline-danger oi oi-delete"></button>
+                                <button @onclick="async () => { await DeleteUserRole(new IdentityUserRole<string>() { RoleId = Role.Id, UserId = user.Id }); }"
+                                        class="btn w-50 btn-outline-danger oi oi-delete">
+                                </button>
                             </td>
                         </tr>
                     }
@@ -138,7 +133,6 @@
 
 
             </div>
-
         }
 
 
@@ -146,7 +140,7 @@
 
 
     <NotAuthorized>
-        <h3  class="text-danger">You are not allowed to view this page, if you think otherwise contact <a target="_blank" href="https://t.me/mimatmalxe">Tamim(mimatmalxe)</a></h3>
+        <h3 class="text-danger">You are not allowed to view this page, if you think otherwise contact <a target="_blank" href="https://t.me/mimatmalxe">Tamim(mimatmalxe)</a></h3>
 
     </NotAuthorized>
 
@@ -154,35 +148,35 @@
 
 @code {
 
-    public class User
+    class User
     {
-        public string id { get; set; }
-        public string username { get; set; }
-    }
-    public class RoleDTO
-    {
-        [Required(ErrorMessage = "Role Name is required.")]
-        [MaxLength(50, ErrorMessage = "Role Name Should be atleast of len 2 and at most 50")]
-        [MinLength(2, ErrorMessage = "Role Name Should be atleast of len 2 and at most 50")]
-        public string roleName { get; set; }
+        public string Id { get; set; }
+        public string Username { get; set; }
     }
 
+    class RoleDto
+    {
+        [Required(ErrorMessage = "Role Name is required.")]
+        [MaxLength(50, ErrorMessage = "Role Name Should be at least of len 2 and at most 50")]
+        [MinLength(2, ErrorMessage = "Role Name Should be at least of len 2 and at most 50")]
+        public string RoleName { get; set; }
+    }
 
 
     // things to do with the role maneging
-    public RoleDTO roleDTO { get; set; } = new();
-    public IdentityRole role { get; set; }
-    public List<IdentityRole> Roles { get; set; } = new();
+    RoleDto _RoleDto { get; set; } = new();
+    IdentityRole Role { get; set; }
+    List<IdentityRole> Roles { get; set; } = new();
 
     // users to a role things
-    public List<User> roleUsers { get; set; } = new();
-    public List<User> users { get; set; } = new();
-    public User user { get; set; } = new();
+    List<User> RoleUsers { get; set; } = new();
+    List<User> Users { get; set; } = new();
+    User _User { get; set; } = new();
 
     // just general things
-    public Queue<string> savedChanges { get; set; } = new();
-    public List<Exception> errors { get; set; } = new();
-    public bool InEditMood { get; set; } = false;
+    Queue<string> SavedChanges { get; set; } = new();
+    List<Exception> Errors { get; set; } = new();
+    bool InEditMood { get; set; } = false;
 
 
     protected override async Task OnParametersSetAsync()
@@ -193,44 +187,38 @@
 
     async Task ShowRole(IdentityRole role)
     {
+        this.Role = role;
 
-        this.role = role;
+    //get all the users of the app to assign them to a role if needed
+        Users = await _dbcontext.Users.Select(e => new User { Id = e.Id, Username = e.UserName }).ToListAsync();
 
-        //get all the users of the app to assine them to a role if needed
-        users = await _dbcontext.Users.Select(e => new User { id = e.Id, username = e.UserName }).ToListAsync();
-
-        // users of the role to show
-        roleUsers = await _dbcontext.UserRoles.Where(r => r.RoleId == role.Id).Join(_dbcontext.Users, ur => ur.UserId, u => u.Id,
-                (ur, u) => new User { id = u.Id, username = u.UserName }).ToListAsync();
-
-
+    // users of the role to show
+        RoleUsers = await _dbcontext.UserRoles.Where(r => r.RoleId == role.Id).Join(_dbcontext.Users, ur => ur.UserId, u => u.Id,
+            (ur, u) => new User { Id = u.Id, Username = u.UserName }).ToListAsync();
     }
-
 
 
     async Task AddRole()
     {
-        using var transaction = await _dbcontext.Database.BeginTransactionAsync();
+        await using var transaction = await _dbcontext.Database.BeginTransactionAsync();
         try
         {
-
-            await roleManager.CreateAsync(new IdentityRole(roleDTO.roleName));
+            await roleManager.CreateAsync(new IdentityRole(_RoleDto.RoleName));
             await _dbcontext.SaveChangesAsync();
             Roles = await _dbcontext.Roles.ToListAsync();
             await transaction.CommitAsync();
             await Task.Run(async () =>
             {
-                savedChanges.Enqueue("Added Successfully");
+                SavedChanges.Enqueue("Added Successfully");
                 await InvokeAsync(StateHasChanged);
                 await Task.Delay(TimeSpan.FromSeconds(5));
-                savedChanges.Dequeue();
+                SavedChanges.Dequeue();
                 await InvokeAsync(StateHasChanged);
             });
-
         }
         catch (Exception ex)
         {
-            errors.Add(ex);
+            Errors.Add(ex);
             await transaction.RollbackAsync();
         }
     }
@@ -238,10 +226,9 @@
 
     async Task UpdateRole(IdentityRole role)
     {
-        using var transaction = await _dbcontext.Database.BeginTransactionAsync();
+        await using var transaction = await _dbcontext.Database.BeginTransactionAsync();
         try
         {
-
             await roleManager.UpdateAsync(role);
             await roleManager.UpdateNormalizedRoleNameAsync(role);
             await _dbcontext.SaveChangesAsync();
@@ -249,29 +236,26 @@
             await transaction.CommitAsync();
             await Task.Run(async () =>
             {
-                savedChanges.Enqueue("Updated Successfully");
+                SavedChanges.Enqueue("Updated Successfully");
                 await InvokeAsync(StateHasChanged);
                 await Task.Delay(TimeSpan.FromSeconds(5));
-                savedChanges.Dequeue();
+                SavedChanges.Dequeue();
                 await InvokeAsync(StateHasChanged);
             });
-
         }
         catch (Exception ex)
         {
-            errors.Add(ex);
+            Errors.Add(ex);
             await transaction.RollbackAsync();
         }
     }
 
 
-
     async Task DeleteRole(IdentityRole role)
     {
-        using var transaction = await _dbcontext.Database.BeginTransactionAsync();
+        await using var transaction = await _dbcontext.Database.BeginTransactionAsync();
         try
         {
-
             _dbcontext.Roles.Remove(role);
             await _dbcontext.SaveChangesAsync();
             Roles = await _dbcontext.Roles.ToListAsync();
@@ -279,17 +263,16 @@
             await transaction.CommitAsync();
             await Task.Run(async () =>
             {
-                savedChanges.Enqueue("Deleted Successfully");
+                SavedChanges.Enqueue("Deleted Successfully");
                 await InvokeAsync(StateHasChanged);
                 await Task.Delay(TimeSpan.FromSeconds(5));
-                savedChanges.Dequeue();
+                SavedChanges.Dequeue();
                 await InvokeAsync(StateHasChanged);
             });
-
         }
         catch (Exception ex)
         {
-            errors.Add(ex);
+            Errors.Add(ex);
             await transaction.RollbackAsync();
         }
     }
@@ -297,75 +280,69 @@
 
     async Task AddUserRole()
     {
-
-        if (string.IsNullOrEmpty(user.id))
+        if (string.IsNullOrEmpty(_User.Id))
         {
             await Task.Run(async () =>
             {
-                savedChanges.Enqueue("You Can't Leave This Empty, please Choose a user");
+                SavedChanges.Enqueue("You Can't Leave This Empty, please Choose a user");
                 await Task.Delay(TimeSpan.FromSeconds(5));
-                savedChanges.Dequeue();
+                SavedChanges.Dequeue();
                 await InvokeAsync(StateHasChanged);
             });
             return;
         }
         else
         {
-            user.username = _dbcontext.Users.Find(user.id).UserName;
+            _User.Username = (await _dbcontext.Users.FindAsync(_User.Id))?.UserName;
         }
 
-        using var transaction = await _dbcontext.Database.BeginTransactionAsync();
+        await using var transaction = await _dbcontext.Database.BeginTransactionAsync();
         try
         {
-
-            await _dbcontext.UserRoles.AddAsync(new IdentityUserRole<string>() { UserId = user.id, RoleId = role.Id });
+            await _dbcontext.UserRoles.AddAsync(new IdentityUserRole<string>() { UserId = _User.Id, RoleId = Role.Id });
             await _dbcontext.SaveChangesAsync();
-            roleUsers = await _dbcontext.UserRoles.Where(r => r.RoleId == role.Id).Join(_dbcontext.Users, ur => ur.UserId, u => u.Id,
-               (ur, u) => new User { id = u.Id, username = u.UserName }).ToListAsync();
+            RoleUsers = await _dbcontext.UserRoles.Where(r => r.RoleId == Role.Id).Join(_dbcontext.Users, ur => ur.UserId, u => u.Id,
+                (ur, u) => new User { Id = u.Id, Username = u.UserName }).ToListAsync();
 
             await transaction.CommitAsync();
             await Task.Run(async () =>
             {
-                savedChanges.Enqueue("Added Successfully");
+                SavedChanges.Enqueue("Added Successfully");
                 await InvokeAsync(StateHasChanged);
                 await Task.Delay(TimeSpan.FromSeconds(5));
-                savedChanges.Dequeue();
+                SavedChanges.Dequeue();
                 await InvokeAsync(StateHasChanged);
             });
-
         }
         catch (Exception ex)
         {
-            errors.Add(ex);
+            Errors.Add(ex);
             await transaction.RollbackAsync();
         }
-
     }
 
     async Task DeleteUserRole(IdentityUserRole<string> userRole)
     {
-        using var transaction = await _dbcontext.Database.BeginTransactionAsync();
+        await using var transaction = await _dbcontext.Database.BeginTransactionAsync();
         try
         {
-
             _dbcontext.UserRoles.Remove(userRole);
             await _dbcontext.SaveChangesAsync();
-            roleUsers = await _dbcontext.UserRoles.Where(r => r.RoleId == role.Id).Join(_dbcontext.Users, ur => ur.UserId, u => u.Id,
-               (ur, u) => new User { id = u.Id, username = u.UserName }).ToListAsync();
+            RoleUsers = await _dbcontext.UserRoles.Where(r => r.RoleId == Role.Id).Join(_dbcontext.Users, ur => ur.UserId, u => u.Id,
+                (ur, u) => new User { Id = u.Id, Username = u.UserName }).ToListAsync();
             await transaction.CommitAsync();
             await Task.Run(async () =>
             {
-                savedChanges.Enqueue("deleted Successfully");
+                SavedChanges.Enqueue("deleted Successfully");
                 await InvokeAsync(StateHasChanged);
                 await Task.Delay(TimeSpan.FromSeconds(5));
-                savedChanges.Dequeue();
+                SavedChanges.Dequeue();
                 await InvokeAsync(StateHasChanged);
             });
-
         }
         catch (Exception ex)
         {
-            errors.Add(ex);
+            Errors.Add(ex);
             await transaction.RollbackAsync();
         }
     }
