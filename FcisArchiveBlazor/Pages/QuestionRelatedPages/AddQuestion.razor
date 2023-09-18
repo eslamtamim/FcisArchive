@@ -180,7 +180,17 @@
             SubjectDto = Subjects.FirstOrDefault(s => s.Id == Question.SubjectId);
             LectureDto = Lectures.FirstOrDefault(l => l.Id == Question.LectureId);
             if (LectureDto is null) return;
-            cache.Remove('q' + LectureDto.Name);
+            
+    // clearing the cache for the pagination
+            var questionCount = await _dbcontext.questions.Where(q => q.LectureId == Question.LectureId).LongCountAsync();
+            var pages = (decimal)questionCount / 20;
+            pages = Math.Ceiling(pages);
+            foreach (var page in Enumerable.Range(1, (int)pages))
+            {
+                cache.Remove($"p{page}" + LectureDto.Name);
+            }
+            
+            
             cache.Remove("questionCount" + LectureDto.Name);
             ClearIndexCache();
             if (Question.Photo is not null)

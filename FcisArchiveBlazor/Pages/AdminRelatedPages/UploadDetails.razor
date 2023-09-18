@@ -65,7 +65,7 @@ else
         return base.OnInitializedAsync();
     }
 
-    void DeleteUploadContent()
+    async Task DeleteUploadContent()
     {
         List<string> lecsNames = new();
         foreach (var file in pdfUploads.Files)
@@ -77,14 +77,23 @@ else
             var lec = _dbcontext.lectures.FirstOrDefault(q => q.Name == lecName);
             if (lec == null) continue;
             _dbcontext.lectures.Remove(lec);
-            cache.Remove('q' + lecName);
+
+
+    // clearing the cache for the pagination
+            var questionCount = await _dbcontext.questions.Where(q => q.Lecture.Name == lecName).LongCountAsync();
+            var pages = (decimal)questionCount / 20;
+            pages = Math.Ceiling(pages);
+            foreach (var page in Enumerable.Range(1, (int)pages))
+            {
+                cache.Remove($"p{page}" + lecName);
+            }
         }
         _dbcontext.PdfUploads.Remove(pdfUploads);
-        _dbcontext.SaveChanges();
+        await _dbcontext.SaveChangesAsync();
         nav.NavigateTo("/upload");
     }
 
-    void DeleteFile(FileUpload file)
+    async Task DeleteFile(FileUpload file)
     {
         var lec = _dbcontext.lectures.FirstOrDefault(q => q.Name == GetNormalizedFileName(file.FileName));
         if (lec != null)
@@ -93,8 +102,17 @@ else
             pdfUploads.Files.Remove(file);
         }
         var lectureName = GetNormalizedFileName(file.FileName);
-        cache.Remove('q'+ lectureName);
-        _dbcontext.SaveChanges();
+
+    // clearing the cache for the pagination
+        var questionCount = await _dbcontext.questions.Where(q => q.Lecture.Name == lectureName).LongCountAsync();
+        var pages = (decimal)questionCount / 20;
+        pages = Math.Ceiling(pages);
+        foreach (var page in Enumerable.Range(1, (int)pages))
+        {
+            cache.Remove($"p{page}" + lectureName);
+        }
+
+        await _dbcontext.SaveChangesAsync();
         StateHasChanged();
     }
 

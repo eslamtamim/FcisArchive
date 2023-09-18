@@ -18,7 +18,7 @@
                 <div>
                     @foreach (var year in Enum.GetValues(typeof(Year)).Cast<Year>())
                     {
-                        <div @onclick="() => { Subject.Year = year; }" >
+                        <div @onclick="() => { Subject.Year = year; }">
                             <input class="form-check-input" type="radio" Name="year" value="@year"/>
                             <lable>@year year</lable>
                         </div>
@@ -500,15 +500,23 @@
         _dbcontext.SaveChanges();
     }
 
-    void ClearCache(Question question)
+    async Task ClearCache(Question question)
     {
         try
         {
+           
             cache.Remove("years");
             cache.Remove("subjects" + Subject.Year);
             cache.Remove("lectures" + Subject.Name);
             cache.Remove("questionCount" + Lecture.Name);
-            cache.Remove('q' + Lecture.Name);
+            // clearing the cache for the pagination
+            var questionCount = await _dbcontext.questions.Where(q => q.LectureId == question.LectureId).LongCountAsync();
+            var pages = (decimal)questionCount / 20;
+            pages = Math.Ceiling(pages);
+            foreach (var page in Enumerable.Range(1, (int)pages))
+            {
+                cache.Remove($"p{page}" + Lecture.Name);
+            }
         }
         catch (Exception ex)
         {

@@ -225,7 +225,7 @@
             cache.Remove("subjects" + (int)subjectYear);
             cache.Remove("lectures" + Subject);
             cache.Remove("questionCount" + LectureName);
-            cache.Remove('q' + LectureName);
+            cache.Remove($"p{page}" + LectureName);
             await _dbcontext.SaveChangesAsync();
             navigation.NavigateTo(navigation.BaseUri, true, true);
         }
@@ -244,7 +244,7 @@
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
             return _dbcontext.questions.LongCount(q => q.Lecture.Name == LectureName);
         });
-        FilteredQuestions = await cache.GetOrCreateAsync('q' + LectureName, async entry =>
+        FilteredQuestions = await cache.GetOrCreateAsync($"q{page}" + LectureName, async entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
             return await GetQuestions(LectureName);
