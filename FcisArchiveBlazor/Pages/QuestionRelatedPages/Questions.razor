@@ -177,7 +177,6 @@
                 .Where(q => q.Lecture.Name == lectureName)
                 .Include(q => q.answers)
                 .OrderBy(q => q.Id)
-                .AsSplitQuery()
                 .Skip((page - 1) * DatabaseSelectionChunk)
                 .Take(DatabaseSelectionChunk)
                 .ToListAsync();
@@ -252,16 +251,19 @@
 
         if (type is null)
         {
-            StudentAnswers = await GetStudentQuestionAnswers();
+      
+            if (StudentUser is not null) StudentAnswers = await GetStudentQuestionAnswers();
             isLoading = false;
             StateHasChanged();
             return;
         }
+        if (StudentUser is not null){
 
         StudentAnswers = await _dbcontext.studentQuestionAnswer
             .Where(q => q.question.LectureId == Lecture.Id
                         && q.studentsId == StudentUser.Id
                         && q.question.QuestionType == type).ToListAsync();
+        }
 
         FilteredQuestions = FilteredQuestions.Where(q => q.QuestionType == type).ToList();
         QuestionCount = FilteredQuestions.Count;

@@ -92,7 +92,7 @@ else
         await _dbcontext.SaveChangesAsync();
         nav.NavigateTo("/upload");
     }
-
+ 
     async Task DeleteFile(FileUpload file)
     {
         var lec = _dbcontext.lectures.FirstOrDefault(q => q.Name == GetNormalizedFileName(file.FileName));

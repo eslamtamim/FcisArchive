@@ -51,7 +51,7 @@ else
 
 
             @if (_load)
-            {
+            {   
                 <Loading />
             }
             else
@@ -60,7 +60,7 @@ else
 
                     @foreach (var lecture in Lectures)
                     {
-                        <a class="btn btn-outline-secondary fw-bold m-2 p-2" href="/s/@_subject.Name/@lecture.Name">
+                        <a class="btn btn-outline-secondary fw-bold m-2 p-2" href="/s/@_subject.Name/@lecture.Name?page=1">
                             @lecture.Name
                         </a>
                     }
