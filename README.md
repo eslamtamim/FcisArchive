@@ -44,10 +44,25 @@ To try Fcis-Archive application locally, follow these steps:
   "AllowedHosts": "*"
 }
 ```
-3. You need the [.NET 7.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/7.0)installed 
-4. Run the app Using the [.NET CLI](https://learn.microsoft.com/en-us/dotnet/core/tools/).
-5. everything should be clear enough to use the app, just go to `/upload` from the navigation layout on the left
-6. upload any file from this [Folder](https://drive.google.com/drive/folders/1ABybBDinUSADI72-prqyBOow-JEjI_US?usp=sharing)
+3. Edit `FcisArchiveBlazor/Program.cs` to use the Default Connection String and Edit if you are using SQL Server please update this
+   ```
+   // This is for Postgres Datebases
+   builder.Services.AddDbContext<ApplicationDbContext>(options => 
+   options.UseLazyLoadingProxies().UseNpgsql(connectionString));
+   ```
+   to this 
+   ```
+   // This is for SQL Server Databases
+	builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseLazyLoadingProxies().UseSqlServer(connectionString));
+    ```
+And want to use SQL Server uncomment it's migrations settings in the `FCISQuestionsHub.EF/Data/ApplicationDbContext.cs`
+
+4. You need the [.NET 7.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/7.0)installed 
+5. Run the app Using the [.NET CLI](https://learn.microsoft.com/en-us/dotnet/core/tools/).
+6. everything should be clear enough to use the app, just go to `/upload` from the navigation layout on the left
+7. upload any file from this [Folder](https://drive.google.com/drive/folders/1ABybBDinUSADI72-prqyBOow-JEjI_US?usp=sharing)
+
 
 ## Special Thanks 
 
