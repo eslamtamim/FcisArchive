@@ -1,0 +1,119 @@
+﻿@page "/Project-details"
+<head>
+    <title>Fcis Archive - Details</title>
+</head>
+<style>
+    /* Style for the pre tag with background color */
+    pre {
+        background-color: #f0f0f0; /* Choose your desired background color */
+        padding: 10px;
+        border-radius: 5px;
+    }
+</style>
+<body>
+
+
+    <h2>Special Thanks</h2>
+    <p>
+        All the Questions prepared in the Project were made by
+        <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="20" viewBox="0 0 256 256">
+                <g fill="none">
+                    <rect width="256" height="256" fill="#fff" rx="60" />
+                    <rect width="256" height="256" fill="#0A66C2" rx="60" />
+                    <path fill="#fff" d="M184.715 217.685h29.27a4 4 0 0 0 4-3.999l.015-61.842c0-32.323-6.965-57.168-44.738-57.168c-14.359-.534-27.9 6.868-35.207 19.228a.32.32 0 0 1-.595-.161V101.66a4 4 0 0 0-4-4h-27.777a4 4 0 0 0-4 4v112.02a4 4 0 0 0 4 4h29.268a4 4 0 0 0 4-4v-55.373c0-15.657 2.97-30.82 22.381-30.82c19.135 0 19.383 17.916 19.383 31.834v54.364a4 4 0 0 0 4 4ZM38 59.627c0 11.865 9.767 21.627 21.632 21.627c11.862-.001 21.623-9.769 21.623-21.631C81.253 47.761 71.491 38 59.628 38C47.762 38 38 47.763 38 59.627Zm6.959 158.058h29.307a4 4 0 0 0 4-4V101.66a4 4 0 0 0-4-4H44.959a4 4 0 0 0-4 4v112.025a4 4 0 0 0 4 4Z" />
+                </g>
+            </svg>
+        </span> <a href="https://www.linkedin.com/in/amrshoukry/" target="_blank">Amr Shoukry | LinkedIn</a>
+        <br /> also a thank you to all classmates who got me inspired to make this project.
+    </p>
+
+
+    <h2>Github Repo</h2>
+    <p><a href="https://github.com/Eslamtamim/FcisArchive" target="_blank">Fcis-Archive On Github</a></p>
+
+
+    <h2>Project Overview</h2>
+    <p>Fcis-Archive is a web application developed to address a problem encountered at a college setting. The need was to swiftly transform questions from a PDF file, typically created by classmates, into an interactive format that resembles Telegram's channel polls. This application is designed to convert questions from a specific PDF file into a Multiple-Choice Questions (MCQ) web application within seconds.</p>
+
+    <h2>Problem Statement</h2>
+    <p>In an academic environment, there was a requirement for an efficient way to convert questions written in a PDF format into an interactive format, similar to Telegram's channel polls. This need was the catalyst for the development of Fcis-Archive, aimed at simplifying the process of transforming PDF questions into an MCQ web application.</p>
+
+    <h2>Technologies Used</h2>
+    <ul>
+        <li>C#</li>
+        <li>.NET Core</li>
+        <li>ASP.NET Core Razor</li>
+        <li>Blazor</li>
+        <li>SQL Server</li>
+        <li>SQL</li>
+        <li>EF Core</li>
+        <li>ASP.NET Identity (User Management)</li>
+        <li>Regex (Used for parsing questions from the PDF)</li>
+        <li>Pagination</li>
+        <li>Caching (in memory)</li>
+        <li>Azure (App Deployment)</li>
+        <li>Digital Ocean (Database Deployment)</li>
+    </ul>
+
+
+    <h2>Install and Use</h2>
+    <p>To try Fcis-Archive application locally, follow these steps:</p>
+    <ol>
+        <li>Clone the repo.</li>
+        <li>
+            Add <code>FcisArchiveBlazor/appsettings.json</code>. Here is what this file should contain:
+            <pre>
+    {
+      "ConnectionStrings": {
+        "DefaultConnection": "[Your local database connection string]"
+      },
+      "Logging": {
+        "LogLevel": {
+          "Default": "Information",
+          "Microsoft.AspNetCore": "Warning"
+        }
+      },
+      "AllowedHosts": "*"
+    }
+    </pre>
+        </li>
+        <li>
+            Edit <code>FcisArchiveBlazor/Program.cs</code> to use the Default Connection String and Edit if you are using SQL Server. Please update this:
+            <pre>
+    // This is for Postgres Datebases
+    builder.Services.AddDbContext&lt;ApplicationDbContext&gt;(options => 
+    options.UseLazyLoadingProxies().UseNpgsql(connectionString));
+    </pre>
+            to this:
+            <pre>
+    // This is for SQL Server Databases
+    builder.Services.AddDbContext&lt;ApplicationDbContext&gt;(options =>
+    options.UseLazyLoadingProxies().UseSqlServer(connectionString));
+    </pre>
+      
+        </li>
+        <li>
+            To use SQL Server, you also need to uncomment its migrations settings in the <code>FCISQuestionsHub.EF/Data/ApplicationDbContext.cs</code>.
+        </li>
+        <li>You will need to get rid of all the <code>  &lt;AuthrizeView&gt; </code> tags in the <code>/Upload</code> page and all pages actually to be able to view then and upload and use all admin properties</li>
+        <li>You need the <a target="_blank" href="https://dotnet.microsoft.com/en-us/download/dotnet/7.0">.NET 7.0 SDK</a> installed.</li>
+        <li>Run the app using the <a target="_blank" href="https://learn.microsoft.com/en-us/dotnet/core/tools/">.NET CLI</a>.</li>
+        <li>Everything should be clear enough to use the app. Just go to <code>/upload</code> from the navigation layout on the left.</li>
+        <li>Upload any file from this <a target="_blank" href="https://drive.google.com/drive/folders/1ABybBDinUSADI72-prqyBOow-JEjI_US?usp=sharing">Folder</a>.</li>
+    </ol>
+
+    <h2>Contributing</h2>
+    <p>Contributions to this project are welcome! To contribute, follow these steps:</p>
+    <ol>
+        <li>Fork the repository.</li>
+        <li>Create a new branch for your feature or bug fix.</li>
+        <li>Make your changes and commit them.</li>
+        <li>Push your changes to your fork.</li>
+        <li>Submit a pull request with a description of your changes.</li>
+    </ol>
+
+    <h2>Contact</h2>
+    <p>For inquiries or support, please contact me <a target="_blank" href="mailto:Eslam.Elmetwalli.Tamim@gmail.com">Eslam.Elmetwalli.Tamim@gmail.com</a> or on telegram <a target="_blank" href="https://t.me/mimatmalxe">@@mimatmalxe</a></p>
+
+</body>
