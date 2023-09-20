@@ -59,9 +59,10 @@ To try Fcis-Archive application locally, follow these steps:
 to use SQL Server you also need to  uncomment it's migrations settings in the `FCISQuestionsHub.EF/Data/ApplicationDbContext.cs`
 
 4. You need the [.NET 7.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/7.0)installed 
-5. Run the app Using the [.NET CLI](https://learn.microsoft.com/en-us/dotnet/core/tools/).
-6. everything should be clear enough to use the app, just go to `/upload` from the navigation layout on the left
-7. upload any file from this [Folder](https://drive.google.com/drive/folders/1ABybBDinUSADI72-prqyBOow-JEjI_US?usp=sharing)
+5. You will need to get rid of all the `<AuthrizeView>` tags in the `/Upload` page and all pages actually  to be able to view then and upload and use all admin properties  
+6. Run the app Using the [.NET CLI](https://learn.microsoft.com/en-us/dotnet/core/tools/).
+7. everything should be clear enough to use the app, just go to `/upload` from the navigation layout on the left
+8. upload any file from this [Folder](https://drive.google.com/drive/folders/1ABybBDinUSADI72-prqyBOow-JEjI_US?usp=sharing)
 
 
 ## Special Thanks 
