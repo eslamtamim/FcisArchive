@@ -56,7 +56,7 @@ To try Fcis-Archive application locally, follow these steps:
 	builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseLazyLoadingProxies().UseSqlServer(connectionString));
     ```
-And want to use SQL Server uncomment it's migrations settings in the `FCISQuestionsHub.EF/Data/ApplicationDbContext.cs`
+to use SQL Server you also need to  uncomment it's migrations settings in the `FCISQuestionsHub.EF/Data/ApplicationDbContext.cs`
 
 4. You need the [.NET 7.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/7.0)installed 
 5. Run the app Using the [.NET CLI](https://learn.microsoft.com/en-us/dotnet/core/tools/).
@@ -65,7 +65,6 @@ And want to use SQL Server uncomment it's migrations settings in the `FCISQuesti
 
 
 ## Special Thanks 
-
 All the Questions prepared in the folder above by [Amr Shoukry | LinkedIn](https://www.linkedin.com/in/amrshoukry/)
 
 ## Contributing
