@@ -11,7 +11,7 @@
     <Authorized>
 
         <div class=" col-4 my-3">
-            <InputFile OnChange="UploadFiles" multiple class="form-control"/>
+            <InputFile OnChange="UploadFiles" multiple class="form-control" />
         </div>
         <EditForm Model="Subject" Context="uploadContext" OnSubmit="UploadPdf" class="col-4">
             <div class="d-flex flex-row justify-content-between gap-2 rounded-2 m-2 p-2">
@@ -19,7 +19,7 @@
                     @foreach (var year in Enum.GetValues(typeof(Year)).Cast<Year>())
                     {
                         <div @onclick="() => { Subject.Year = year; }">
-                            <input class="form-check-input" type="radio" Name="year" value="@year"/>
+                            <input class="form-check-input" type="radio" Name="year" value="@year" />
                             <lable>@year year</lable>
                         </div>
                     }
@@ -28,7 +28,7 @@
                     @foreach (var semester in Enum.GetValues(typeof(Semester)).Cast<Semester>())
                     {
                         <div @onclick="() => { Subject.Semester = semester; }">
-                            <input class="form-check-input" type="radio" Name="semester" value="@semester"/>
+                            <input class="form-check-input" type="radio" Name="semester" value="@semester" />
                             <lable>@semester Semester</lable>
                         </div>
                     }
@@ -43,45 +43,45 @@
         @switch (UploadState)
         {
             case States.Done:
-            {
-                <div class="alert m-5 alert-success" role="alert">
-                    <p>
-                        Done @QuestionsThatGotUploaded.Count() / @NumberOfQuestions
-                    </p>
-                    @if (FilesDone.Count > 0)
-                    {
-                        foreach (var file in FilesDone)
+                {
+                    <div class="alert m-5 alert-success" role="alert">
+                        <p>
+                            Done @QuestionsThatGotUploaded.Count() / @NumberOfQuestions
+                        </p>
+                        @if (FilesDone.Count > 0)
                         {
-                            <p>(@file) got uploaded 🥳</p>
+                            foreach (var file in FilesDone)
+                            {
+                                <p>(@file) got uploaded 🥳</p>
+                            }
                         }
-                    }
-                    <p>
-                        Error Rate @Errors.Count()
-                    </p>
-                </div>
-                break;
-            }
+                        <p>
+                            Error Rate @Errors.Count()
+                        </p>
+                    </div>
+                    break;
+                }
             case States.Error:
                 <div class="alert m-5 alert-danger" role="alert">
                     Error
                 </div>
                 break;
             case States.Loading:
-            {
-                <div class="alert m-5 alert-secondary" role="alert">
-                    Loading... @QuestionsThatGotUploaded.Count() / @NumberOfQuestions from @Filename
-                    <br/>
-                    @if (FilesDone.Count > 0)
-                    {
-                        foreach (var file in FilesDone)
+                {
+                    <div class="alert m-5 alert-secondary" role="alert">
+                        Loading... @QuestionsThatGotUploaded.Count() / @NumberOfQuestions from @Filename
+                        <br />
+                        @if (FilesDone.Count > 0)
                         {
-                            <p>@file Done ✔</p>
+                            foreach (var file in FilesDone)
+                            {
+                                <p>@file Done ✔</p>
+                            }
                         }
-                    }
-                    Error Rate @Errors.Count()
-                </div>
-                break;
-            }
+                        Error Rate @Errors.Count()
+                    </div>
+                    break;
+                }
             case States.Idle:
                 break;
             default:
@@ -98,11 +98,11 @@
                                 @foreach (var item in @error.First().Split('\n'))
                                 {
                                     @item
-                                    <br/>
+                                    <br />
                                 }
                             </div>
                         </summary>
-                        <br/>
+                        <br />
                         @for (int i = 1; i < error.Count(); i++)
                         {
                             <p class="alert m-5 alert-danger" role="alert">
@@ -113,7 +113,7 @@
                 </div>
             }
         }
-        <ListOfUploads/>
+        <ListOfUploads />
     </Authorized>
     <NotAuthorized>
         <h3>You are not allowed to view this page, if you think otherwise contact <a target="_blank" href="https://t.me/mimatmalxe">Tamim(mimatmalxe)</a></h3>
@@ -197,7 +197,7 @@
 
         foreach (var file in _uploadFiles.GetMultipleFiles(50))
         {
-    //FileErrors = new();
+            //FileErrors = new();
 
             UploadState = States.Loading;
 
@@ -214,16 +214,17 @@
 
 
             FileUpload fileUpload = new()
-            {
-                RequestID = UploadsModel.RequestId,
-                FileName = Filename,
-                FileSize = (int)file.Size,
-            };
+                {
+                    RequestID = UploadsModel.RequestId,
+                    FileName = Filename,
+                    FileSize = (int)file.Size,
+                };
             fileUploads.Add(fileUpload);
             _dbcontext.FileUploads.Add(fileUpload);
             var fileUploadSaving = await _dbcontext.SaveChangesAsync();
 
             var text = PDFtoText.pdfText(filePath);
+            // var regexPattern = @"(\d+)\)([\s\S]*?)\(page\s(.+?)\)";
             var regexPattern = @"(\d+)\)([\s\S]*?)\(Slide\s(.+?)\)";
             Regex regex = new Regex(regexPattern);
             MatchCollection matches = regex.Matches(text);
@@ -231,37 +232,37 @@
             NumberOfQuestions += matches.Count();
 
 
-    // initializing the subject and the lecture
+            // initializing the subject and the lecture
 
             AddingSubjectAndLecture(filePath, fileUploadSaving, fileUpload.FileId);
 
-    // start working with the regex regexResult
+            // start working with the regex regexResult
             foreach (Match match in matches)
             {
                 var regexResult = match.Value.Trim().Split('\n').ToList();
                 Question question = new Question();
 
-    // initializing the question
+                // initializing the question
                 bool stateOfTheQuestion = AddingQuestion(regexResult, ref question, fileUploadSaving, fileUpload.FileId);
                 if (stateOfTheQuestion is false) continue;
 
-    // removing the question text and the hint from the list of the regex regexResult to end up with just the answers
+                // removing the question text and the hint from the list of the regex regexResult to end up with just the answers
                 regexResult.Remove(regexResult.First());
                 regexResult.Remove(regexResult.Last());
 
 
-    // adding the question to the database and updating the cache and the ui
+                // adding the question to the database and updating the cache and the ui
                 var statesOfTrimmingTheRegexResult = TrimmingTheRegexResult(regexResult, ref question, fileUploadSaving, fileUpload.FileId, file.Name);
                 if (statesOfTrimmingTheRegexResult is false) continue;
 
-    // deciding the question type - i know it's bad as fuck, but until i find a better way;
+                // deciding the question type - i know it's bad as fuck, but until i find a better way;
                 if (regexResult.Count() == 2 && regexResult.First().Contains("T") && regexResult.First().Trim().Length <= 6) question.QuestionType = QuestionType.TrueFalse;
                 else question.QuestionType = QuestionType.MCQ;
 
-    // initializing the answers
+                // initializing the answers
                 AddingAnswers(regexResult, ref question, fileUploadSaving, fileUpload.FileId);
 
-                ClearCache(question);
+                await ClearCache(question);
             }
 
             FilesDone.Add(Filename);
@@ -270,7 +271,7 @@
         UploadState = States.Done;
         Subject = new Subject();
 
-    // to do : release the memory after u finish with the function
+        // to do : release the memory after u finish with the function
         return true;
     }
 
@@ -278,7 +279,7 @@
     async Task<bool> ValidatingFileAsync(IBrowserFile file, string filePath)
     {
         Filename = file.Name;
-    // making sure the file is a pdf and its size is less that 15MB;
+        // making sure the file is a pdf and its size is less that 15MB;
         if (file.Size > _maxFileSize)
         {
             Errors.Add(new() { { $"File is Size is {file.Size / 1024 / 1024} MB, this is more than the 15 MB Limit" } });
@@ -317,7 +318,7 @@
         try
         {
             string normalizedFileName = GetNormalizedFileName(filePath);
-    // adding the subject to the database and updating the cache and the ui
+            // adding the subject to the database and updating the cache and the ui
 
             Subject.Name = normalizedFileName.Split('-').First();
             Subject temp = _dbcontext.subjects.FirstOrDefault(s => s.Name == Subject.Name);
@@ -339,11 +340,11 @@
             }
 
             Lecture = new()
-            {
-                SubjectId = Subject.Id,
-                UploaderId = UserId,
-                Name = normalizedFileName,
-            };
+                {
+                    SubjectId = Subject.Id,
+                    UploaderId = UserId,
+                    Name = normalizedFileName,
+                };
             _dbcontext.lectures.Add(Lecture);
 
             _dbcontext.SaveChanges();
@@ -361,8 +362,16 @@
         subjectFileName = subjectFileName[..(subjectFileName.LastIndexOf('-'))];
         if (!subjectFileName.ToLower().Contains("all"))
         {
-            string fileNumber = subjectFileName.Split('-')[1][3..];
-            subjectFileName = $"{subjectFileName.Split('-')[0]}-{subjectFileName.Split('-')[1][..3]}-{fileNumber}";
+            if (subjectFileName.ToLower().Contains("lec"))
+            {
+                string fileNumber = subjectFileName.Split('-')[1][3..];
+                subjectFileName = $"{subjectFileName.Split('-')[0]}-{subjectFileName.Split('-')[1][..3]}-{fileNumber}";
+
+            }
+            else
+            {
+                subjectFileName = $"{subjectFileName.Split('-')[0]}-{subjectFileName.Split('-')[1]}";
+            }
         }
         return subjectFileName;
     }
@@ -372,22 +381,22 @@
         try
         {
             question = new Question()
-            {
-    //filePath, /* filePath.Substring(filePath.LastIndexOf('\\')+1, filePath.LastIndexOf('.')),*/ // filePath[(filePath.LastIndexOf('\\') + 1)..],
-                SubjectId = Subject.Id,
-                LectureId = Lecture.Id,
-                Text = regexResult.First(),
-                AuthorName = AuthorName,
-                Hint = regexResult.Last(),
-            };
+                {
+                    //filePath, /* filePath.Substring(filePath.LastIndexOf('\\')+1, filePath.LastIndexOf('.')),*/ // filePath[(filePath.LastIndexOf('\\') + 1)..],
+                    SubjectId = Subject.Id,
+                    LectureId = Lecture.Id,
+                    Text = regexResult.First(),
+                    AuthorName = AuthorName,
+                    Hint = regexResult.Last(),
+                };
         }
 
         catch (Exception ex)
         {
             Exception e = new(ex.Message + $"error happened while adding the \n question : \"{question.Text}\"  try adding it manually", ex.InnerException)
-            {
-                Source = ex.Source
-            };
+                {
+                    Source = ex.Source
+                };
             List<string> currentFileErrors = new()
             {
                 ex.Message,
@@ -405,7 +414,7 @@
         if (regexResult == null) throw new ArgumentNullException(nameof(regexResult));
         try
         {
-    // making sure that the rest of the regex answers doesn't contain garbage strings
+            // making sure that the rest of the regex answers doesn't contain garbage strings
             while (regexResult.Any() && (regexResult.First().Length < 2 || regexResult.First()[1] != ')'))
             {
                 question.Text += regexResult.First();
@@ -420,9 +429,9 @@
         catch (Exception ex)
         {
             Exception e = new(ex.Message + $"error happened while adding the \n question : \"{question.Text}\" \n in the file \'{fileName}\' try adding it manually", ex.InnerException)
-            {
-                Source = ex.Source
-            };
+                {
+                    Source = ex.Source
+                };
             List<string> currentFileErrors = new()
             {
                 $"error happened while adding the \n question : \"{question.Text}\" \n in the file \'{fileName}\' try adding it manually",
@@ -445,11 +454,11 @@
             try
             {
                 answer = new Answer()
-                {
-                    Text = ans,
-                    IsCorrect = false,
-                    QuestionId = question.Id
-                };
+                    {
+                        Text = ans,
+                        IsCorrect = false,
+                        QuestionId = question.Id
+                    };
 
                 var lengthOfAnswerText = ans.Length;
                 var indexOfTheStarIndicator = ans.LastIndexOf('*');
@@ -464,9 +473,9 @@
             catch (Exception ex)
             {
                 Exception e = new(ex.Message + $"error happened while adding the an answer: {answer.Text} to the question {question.Text} try adding it manually", ex.InnerException)
-                {
-                    Source = ex.Source
-                };
+                    {
+                        Source = ex.Source
+                    };
 
                 List<string> currentFileErrors = new()
                 {
@@ -488,12 +497,12 @@
         if (ex.InnerException != null)
         {
             FileErrors fileError = new()
-            {
-                ErrorTitle = ex.Source,
-                ErrorMessage = ex.Message,
-                ErrorDescription = ex.InnerException.Message,
-                FileId = fileUploadId
-            };
+                {
+                    ErrorTitle = ex.Source,
+                    ErrorMessage = ex.Message,
+                    ErrorDescription = ex.InnerException.Message,
+                    FileId = fileUploadId
+                };
             FileErrors.Add(fileError);
             _dbcontext.FileErrors.Add(fileError);
         }
@@ -504,9 +513,9 @@
     {
         try
         {
-           
+
             cache.Remove("years");
-            cache.Remove("subjects" + Subject.Year);
+            cache.Remove("subjects" + (int)Subject.Year);
             cache.Remove("lectures" + Subject.Name);
             cache.Remove("questionCount" + Lecture.Name);
             // clearing the cache for the pagination

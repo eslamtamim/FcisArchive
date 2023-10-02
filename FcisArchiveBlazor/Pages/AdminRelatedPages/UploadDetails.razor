@@ -19,24 +19,24 @@
 
     <table class="table">
         <thead>
-        <tr>
-            <th scope="col">File Name</th>
-            <th scope="col">File Size</th>
-            <th scope="col">Details</th>
-        </tr>
+            <tr>
+                <th scope="col">File Name</th>
+                <th scope="col">File Size</th>
+                <th scope="col">Details</th>
+            </tr>
         </thead>
         <tbody>
-        @foreach (var file in pdfUploads.Files)
-        {
-            <tr>
-                <td>@file.FileName</td>
-                <td>@((file.FileSize) / (1024)) KB</td>
-                <td>
-                    <a class="btn btn-outline-primary" href="/Upload/@RequestId/@file.FileId">Go to Details</a>
-                    <button class="btn btn-outline-danger" @onclick="() => { DeleteFile(file); }">Delete File Questions</button>
-                </td>
-            </tr>
-        }
+            @foreach (var file in pdfUploads.Files)
+            {
+                <tr>
+                    <td>@file.FileName</td>
+                    <td>@((file.FileSize) / (1024)) KB</td>
+                    <td>
+                        <a class="btn btn-outline-primary" href="/Upload/@RequestId/@file.FileId">Go to Details</a>
+                        <button class="btn btn-outline-danger" @onclick="async () => { await DeleteFile(file); }">Delete File Questions</button>
+                    </td>
+                </tr>
+            }
         </tbody>
     </table>
 }
@@ -72,45 +72,38 @@ else
         {
             lecsNames.Add(GetNormalizedFileName(file.FileName));
         }
-        foreach (var lecName in lecsNames)
+
+        foreach (var lectureName in lecsNames)
         {
-            var lec = _dbcontext.lectures.FirstOrDefault(q => q.Name == lecName);
+            var lec = _dbcontext.lectures.FirstOrDefault(q => q.Name == lectureName);
             if (lec == null) continue;
             _dbcontext.lectures.Remove(lec);
 
-
-    // clearing the cache for the pagination
-            var questionCount = await _dbcontext.questions.Where(q => q.Lecture.Name == lecName).LongCountAsync();
-            var pages = (decimal)questionCount / 20;
-            pages = Math.Ceiling(pages);
-            foreach (var page in Enumerable.Range(1, (int)pages))
-            {
-                cache.Remove($"p{page}" + lecName);
-            }
+            var lecture = _dbcontext.lectures.FirstOrDefault(l => l.Name == lectureName);
+            var subject = _dbcontext.subjects.FirstOrDefault(s => s.Id == lecture.SubjectId);
+            // clearing the cache
+            await ClearCache(subject, lecture);
         }
         _dbcontext.PdfUploads.Remove(pdfUploads);
         await _dbcontext.SaveChangesAsync();
         nav.NavigateTo("/upload");
     }
- 
+
     async Task DeleteFile(FileUpload file)
     {
-        var lec = _dbcontext.lectures.FirstOrDefault(q => q.Name == GetNormalizedFileName(file.FileName));
+        var lectureName = GetNormalizedFileName(file.FileName);
+
+        var lec = _dbcontext.lectures.FirstOrDefault(q => q.Name == lectureName);
         if (lec != null)
         {
             _dbcontext.lectures.Remove(lec);
             pdfUploads.Files.Remove(file);
         }
-        var lectureName = GetNormalizedFileName(file.FileName);
 
-    // clearing the cache for the pagination
-        var questionCount = await _dbcontext.questions.Where(q => q.Lecture.Name == lectureName).LongCountAsync();
-        var pages = (decimal)questionCount / 20;
-        pages = Math.Ceiling(pages);
-        foreach (var page in Enumerable.Range(1, (int)pages))
-        {
-            cache.Remove($"p{page}" + lectureName);
-        }
+        var lecture = _dbcontext.lectures.FirstOrDefault(l => l.Name == lectureName);
+        var subject = _dbcontext.subjects.FirstOrDefault(s => s.Id == lecture.SubjectId);
+        // clearing the cache
+        await ClearCache(subject, lecture);
 
         await _dbcontext.SaveChangesAsync();
         StateHasChanged();
@@ -118,16 +111,57 @@ else
 
     static string GetNormalizedFileName(string filePath)
     {
+
         int indexOfTheStartOfTheFileName = (filePath.LastIndexOf('\\') + 1);
         var subjectFileName = filePath[indexOfTheStartOfTheFileName..];
         subjectFileName = subjectFileName[..(subjectFileName.LastIndexOf('-'))];
         if (!subjectFileName.ToLower().Contains("all"))
         {
-            string fileNumber = subjectFileName.Split('-')[1][3..];
-            subjectFileName = $"{subjectFileName.Split('-')[0]}-{subjectFileName.Split('-')[1][..3]}-{fileNumber}";
+            if (subjectFileName.ToLower().Contains("lec"))
+            {
+                string fileNumber = subjectFileName.Split('-')[1][3..];
+                subjectFileName = $"{subjectFileName.Split('-')[0]}-{subjectFileName.Split('-')[1][..3]}-{fileNumber}";
+
+            }
+            else
+            {
+                subjectFileName = $"{subjectFileName.Split('-')[0]}-{subjectFileName.Split('-')[1]}";
+            }
         }
         return subjectFileName;
+
+    }
+
+    async Task ClearCache(Subject subject, Lecture lecture)
+    {
+        try
+        {
+
+            cache.Remove("years");
+            cache.Remove("subjects" + (int)subject.Year);
+            cache.Remove("lectures" + subject.Name);
+            // clearing the cache for the pagination
+            var questionCount = await _dbcontext.questions.Where(q => q.LectureId == lecture.Id).LongCountAsync();
+            var pages = (decimal)questionCount / 20;
+            pages = Math.Ceiling(pages);
+            foreach (var page in Enumerable.Range(1, (int)pages))
+            {
+                cache.Remove($"p{page}" + lecture.Name);
+            }
+        }
+        catch (Exception ex)
+        {
+            List<string> strings = new()
+            {
+              //  "Couldn't clear cache for " + question.Text,
+                ex.Message
+            };
+            if (ex.InnerException != null) strings.Add(ex.InnerException.Message);
+            //  Errors.Add(strings);
+            StateHasChanged();
+        }
     }
 
 
 }
+

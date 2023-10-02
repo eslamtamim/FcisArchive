@@ -1,7 +1,6 @@
 ﻿@inject ApplicationDbContext _dbcontext
 @inject IMemoryCache cache
 
-<h1>Select Which Year To Get Its Subjects</h1>
 @if (Years is null)
 {
     <Loading />
@@ -12,7 +11,7 @@ else
 
     <div>
 
-        <div class="d-flex  flex-wrap justify-content-start m-5">
+       @*  <div class="d-flex  flex-wrap justify-content-start m-5">
 
             @foreach (var year in Years)
             {
@@ -21,7 +20,7 @@ else
                 </button>
             }
 
-        </div>
+        </div> *@
 
         <div class="d-flex flex-wrap justify-content-start align-items-center m-5">
 
@@ -51,7 +50,7 @@ else
 
 
             @if (_load)
-            {   
+            {
                 <Loading />
             }
             else
@@ -107,11 +106,11 @@ else
     {
         _load = true;
         this.Year = year;
-       Subjects = cache.GetOrCreate("subjects"+(int)year, (entry) =>
-       {
-           entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
-           return _dbcontext.subjects.Where(x => x.Year == year).Select(s => new SubjectDto(s.Id, s.Name)).ToList();
-       });
+        Subjects = cache.GetOrCreate("subjects" + (int)year, (entry) =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
+            return _dbcontext.subjects.Where(x => x.Year == year).OrderBy(s=>s.Semester).Select(s => new SubjectDto(s.Id, s.Name)).ToList();
+        });
         _lecture = null;
         _load = false;
         StateHasChanged();
@@ -121,7 +120,7 @@ else
     {
         _load = true;
         this._subject = subject;
-        Lectures = cache.GetOrCreate("lectures"+subject.Name, (entry) =>
+        Lectures = cache.GetOrCreate("lectures" + subject.Name, (entry) =>
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
             return _dbcontext.lectures.Where(x => x.SubjectId == subject.Id).Select(l => new LectureDto(l.Id, l.Name)).ToList();
@@ -130,6 +129,6 @@ else
         StateHasChanged();
     }
 
-   
+
 }
 
