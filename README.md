@@ -62,7 +62,7 @@ to use SQL Server you also need to  uncomment it's migrations settings in the `F
 5. You will need to get rid of all the `<AuthrizeView>` tags in the `/Upload` page and all pages actually  to be able to view then and upload and use all admin properties  
 6. Run the app Using the [.NET CLI](https://learn.microsoft.com/en-us/dotnet/core/tools/).
 7. everything should be clear enough to use the app, just go to `/upload` from the navigation layout on the left
-8. upload any file from this [Folder](https://drive.google.com/drive/folders/1ABybBDinUSADI72-prqyBOow-JEjI_US?usp=sharing)
+8. upload any file from this [Folder](https://drive.google.com/drive/folders/119ugENfVwGPuj-mO43ccxponFPBz-CTz?usp=sharing)
 
 
 ## Special Thanks 
