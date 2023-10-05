@@ -1,0 +1,14 @@
+﻿#about {
+    display: none;
+}
+
+@media (max-width: 750px) {
+
+    #about {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        
+    }
+}
+}

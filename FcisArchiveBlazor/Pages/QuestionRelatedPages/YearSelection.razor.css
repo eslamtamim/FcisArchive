@@ -1,3 +1,5 @@
+
+
 .card {
     width: 190px;
     background: white;
@@ -28,3 +30,20 @@
 .card:hover {
     cursor: pointer;
 }
+
+
+
+@media (max-width: 750px) {
+    .card {
+        width: 100px;
+        background: white;
+        padding: .4em;
+        height: 120px;
+        border-radius: 6px;
+    }
+  
+}
+/*
+    display the about section in the mobile view
+*/
+

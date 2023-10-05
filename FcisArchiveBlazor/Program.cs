@@ -1,4 +1,6 @@
 using FcisArchiveBlazor.Areas.Identity;
+using FcisArchiveBlazor.Services;
+using FcisArchiveBlazor.Settings;
 //using FcisArchiveBlazor.Data;
 using FCISQuestionsHub.Core.Interfaces;
 using FCISQuestionsHub.Core.Models;
@@ -31,6 +33,8 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<StudentUser>>();
 builder.Services.AddSingleton(typeof(IBaseRepo<>), typeof(BaseRepo<>));
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
+builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
+builder.Services.AddTransient<IMaillingService, MaillingService>();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient();

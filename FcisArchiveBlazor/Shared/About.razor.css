@@ -1,5 +1,4 @@
 ﻿footer {
-    background-color: #14181c;
     margin-left : 20px;
 }
 a {
@@ -8,6 +7,7 @@ a {
 }
 
 .Myname{
-    display: inline-block;
-   
+    display: inline-block;  
 }
+
+

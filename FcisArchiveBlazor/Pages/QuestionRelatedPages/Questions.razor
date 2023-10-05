@@ -8,49 +8,54 @@
 @inject ApplicationDbContext _dbcontext
 @inject IMemoryCache cache
 
-<div>
 
-    <div class="d-flex align-content-between justify-content-between">
-        <h1 class="fw-bold">@LectureName.Replace('-', ' ').Replace("Lec", "Lecture")</h1>
-        <div>
-            <button class="btn btn-outline-primary" @onclick="() => QuestionsByType(null)">All</button>
-            <button class="btn btn-outline-secondary" @onclick="() => QuestionsByType(QuestionType.MCQ)">MCQ</button>
-            <button class="btn btn-outline-secondary" @onclick="() => QuestionsByType(QuestionType.TrueFalse)">T&F</button>
-        </div>
+<div class="d-flex align-content-between justify-content-between">
+    <div class="d-flex align-items-center justify-content-center align-content-center gap-3">
+        <a class="btn btn-outline-secondary " href="/s/@Subject">&larr;</a>
+
+        <h3 style="margin-bottom:-3px;" class="fw-bold">@LectureName.Replace('-', ' ').Replace("Lec", "Lecture")</h3>
+
+    </div>
+
+    <div class="d-flex flex-column gap-1">
+
         <AuthorizeView>
-            <div>
-                <button class="btn d-inline btn-warning" @onclick="ResetQuestionsAnswers">Reset All Answers</button>
+            <div class="d-flex gap-2">
+                <button class="btn d-inline btn-warning" @onclick="ResetQuestionsAnswers">Reset Answers</button>
                 <AuthorizeView Context="childContext" Roles="Super-Admin, Admin">
-                    <button class="btn d-inline btn-danger" @onclick="DeleteQuestionsBySubject">Delete This Lecture</button>
+                    <button class="btn d-inline btn-danger" @onclick="DeleteQuestionsBySubject">Delete Lecture</button>
                 </AuthorizeView>
             </div>
         </AuthorizeView>
 
     </div>
-    @* <p class="alert-warning" style="width:fit-content">This is a demo version of the app, due to the cost of the
-    database, questions are limited to only 20 but the count is accurate </p>*@
+</div>
 
-    @if (_errors.Count > 0)
-    {
-        @foreach (var error in _errors)
-        {
-            <p class="my-0 text-danger">@error</p>
-        }
-    }
-    @if (FilteredQuestions is null || isLoading)
-    {
-        <Loading/>
-    }
-    else if (FilteredQuestions!.Count == 0)
-    {
-        <div class="alert alert-danger" role="alert">
-            no questions yet
-        </div>
-    }
-    else
-    {
-        <div class="d-flex align-items-center  @(_errors.Count > 0 ? "justify-content-between" : "justify-content-between") ">
-            @if (_errors.Count > 0)
+@if (FilteredQuestions is null || isLoading)
+{
+    <Loading />
+}
+else if (FilteredQuestions!.Count == 0)
+{
+    <div class="alert alert-danger m-4" role="alert">
+        no questions yet
+    </div>
+}
+else
+{
+    <div>
+
+        <div class="d-flex flex-column @(_errors.Count > 0 ? "justify-content-between" : "justify-content-between") ">
+
+            <div>
+
+                @foreach (var error in _errors)
+                {
+                    <p class="my-0 text-danger">@error</p>
+                }
+            </div>
+
+            @if (UserName is null)
             {
                 <div class="d-flex m-3">
                     <a class="btn mx-3 btn-secondary" href="Account/Register">Register</a>
@@ -58,33 +63,57 @@
                 </div>
             }
         </div>
-        <div class="pagesAndCount d-flex justify-content-between align-items-center">
+
+        <div class="pagesAndCount my-4 d-flex justify-content-between align-items-center">
+           @*  <div class="d-flex flex-column">
+                <div class="d-flex m-4 justify-content-center align-content-center gap-2 align-items-center flex-wrap">
+
+                    @foreach (var currentPage in Enumerable.Range(1, (int)pages))
+                    {
+                        <a class=" btn @(page  == currentPage ? "btn-secondary" : "btn-outline-secondary")" @onclick="()=>{SetPage(currentPage);}" href="/s/@Subject/@LectureName?page=@currentPage">
+                            @currentPage.ToString()
+                        </a>
+                    }
+
+                </div>
+            </div> *@
+            <p class="fw-bolder align-self-end m-0 mx-3"> Questions Count : <span class="alert-info"> @QuestionCount </span> </p>
+
+            <div>
+                <button class="btn @(questionType is null ? "btn-primary" : "btn-outline-primary")" @onclick="() => QuestionsByType(null)">All</button>
+                <button class="btn @(questionType is QuestionType.MCQ ? "btn-secondary" : "btn-outline-secondary")" @onclick="() => QuestionsByType(QuestionType.MCQ)">MCQ</button>
+                <button class="btn @(questionType is QuestionType.TrueFalse ? "btn-secondary" : "btn-outline-secondary")" @onclick="() => QuestionsByType(QuestionType.TrueFalse)">T&F</button>
+            </div>
+        </div>
+
+        @foreach (var question in FilteredQuestions!)
+        {
+            <QuestionCard Question="@question" IsAuthorized="@(UserName is not null)"
+                          StudentAnswer="@(FindStudentAnswer.TryGetValue(question.Id, out var value) ? value : null)"
+                          StudentUser="@StudentUser" />
+        }
+
+        <div class="d-flex flex-column justify-content-center align-items-center">
             <div class="d-flex m-4 justify-content-center align-content-center gap-2 align-items-center flex-wrap">
 
                 @foreach (var currentPage in Enumerable.Range(1, (int)pages))
                 {
-                    <button class=" btn @(page  == currentPage ? "btn-secondary" : "btn-outline-secondary")"  @onclick="() => { SetPage(currentPage); }">
+                    <a class=" btn @(page  == currentPage ? "btn-secondary" : "btn-outline-secondary")" @onclick="()=>{SetPage(currentPage);}" href="/s/@Subject/@LectureName?page=@currentPage">
                         @currentPage.ToString()
-                    </button>
+                    </a>
                 }
+
             </div>
-            <p style="font-size: 25px " class="fw-bolder">
-                Amount of Questions :
-                <span class="alert-info">
-                    @QuestionCount
-                </span>
-            </p>
+
+            <p class="small">Each page contain at most 20 Questions</p>
+
         </div>
-        foreach (var question in FilteredQuestions!)
-        {
-            <QuestionCard Question="@question" IsAuthorized="@(UserName is not null)"
-                          StudentAnswer="@(FindStudentAnswer.TryGetValue(question.Id, out var value) ? value : null)"
-                          StudentUser="@StudentUser"/>
-        }
-    }
+    </div>
+    <MadeWithLove />
+}
 
 
-</div>
+
 
 
 @code {
@@ -107,10 +136,11 @@
     Lecture Lecture { get; set; }
     int page = 1;
     decimal pages = 1;
-        const int DatabaseSelectionChunk = 20;
+    const int DatabaseSelectionChunk = 20;
     bool isLoading = false;
     long QuestionCount { get; set; }
     string UserName { get; set; }
+    QuestionType? questionType = null;
 
 
     protected override async Task OnInitializedAsync()
@@ -129,6 +159,7 @@
 
         UserAuth = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
         if (UserAuth.User.Identity != null) UserName = UserAuth.User.Identity.Name;
+
         if (UserName is null)
         {
             _errors.Add("you are not logged in");
@@ -138,10 +169,16 @@
         {
             StudentUser = await userManager.FindByNameAsync(UserName);
             Lecture = await _dbcontext.lectures.FirstOrDefaultAsync(l => l.Name == LectureName);
+            if (Lecture is null)
+            {
+                _errors.Add("Lecture not found");
+                FilteredQuestions = new();  
+                return;
+            }
             StudentAnswers = await GetStudentQuestionAnswers();
             foreach (var sq in StudentAnswers) FindStudentAnswer[sq.questionId] = sq;
         }
-    //cache the question count for 1 day
+        //cache the question count for 1 day
         QuestionCount = cache.GetOrCreate<long>("questionCount" + LectureName, entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
@@ -149,14 +186,15 @@
         });
         pages = (decimal)QuestionCount / DatabaseSelectionChunk;
         pages = Math.Ceiling(pages);
+
         FilteredQuestions = await cache.GetOrCreateAsync($"p{page}" + LectureName, async entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
             return await GetQuestions(LectureName);
         });
 
-
         await base.OnInitializedAsync();
+
     }
 
 
@@ -183,20 +221,6 @@
 
             result.AddRange(query);
 
-
-    // var skipLast = (int)databaseSelectionChunk * (int)(QuestionCount / databaseSelectionChunk);
-    // var takeLast = (int)QuestionCount % databaseSelectionChunk;
-    //
-    // var lastQuery = await _dbcontext.questions
-    //     .Where(q => q.Lecture.Name == lectureName)
-    //     .OrderBy(q => q.Id)
-    //     .Include(q => q.answers)
-    //     .AsSplitQuery()
-    //     .Skip(skipLast)
-    //     .Take(takeLast)
-    //     .ToListAsync();
-    //
-    // result.AddRange(lastQuery);
             return result;
         }
         catch (Exception e)
@@ -217,7 +241,7 @@
     {
         try
         {
-    // just delete the lecture and the questions will be deleted by cascade
+            // just delete the lecture and the questions will be deleted by cascade
             var qs = _dbcontext.lectures.FirstOrDefault(l => l.Name == LectureName);
             if (qs != null) _dbcontext.lectures.Remove(qs);
             var subjectYear = _dbcontext.subjects.FirstOrDefault(s => s.Name == Subject)!.Year;
@@ -243,7 +267,8 @@
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
             return _dbcontext.questions.LongCount(q => q.Lecture.Name == LectureName);
         });
-        FilteredQuestions = await cache.GetOrCreateAsync($"q{page}" + LectureName, async entry =>
+
+        FilteredQuestions = await cache.GetOrCreateAsync($"p{page}" + LectureName, async entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
             return await GetQuestions(LectureName);
@@ -251,21 +276,24 @@
 
         if (type is null)
         {
-      
+
+            questionType = type;
             if (StudentUser is not null) StudentAnswers = await GetStudentQuestionAnswers();
             isLoading = false;
             StateHasChanged();
             return;
         }
-        if (StudentUser is not null){
+        if (StudentUser is not null)
+        {
 
-        StudentAnswers = await _dbcontext.studentQuestionAnswer
-            .Where(q => q.question.LectureId == Lecture.Id
-                        && q.studentsId == StudentUser.Id
-                        && q.question.QuestionType == type).ToListAsync();
+            StudentAnswers = await _dbcontext.studentQuestionAnswer
+                .Where(q => q.question.LectureId == Lecture.Id
+                            && q.studentsId == StudentUser.Id
+                            && q.question.QuestionType == type).ToListAsync();
         }
 
         FilteredQuestions = FilteredQuestions.Where(q => q.QuestionType == type).ToList();
+        questionType = type;
         QuestionCount = FilteredQuestions.Count;
         isLoading = false;
         StateHasChanged();
@@ -289,13 +317,22 @@
         }
     }
 
-    void SetPage(int currentPage)
+    async void SetPage(int currentPage)
     {
-        var queryParams = new Dictionary<string, string>
+
+        page = currentPage;
+        isLoading = true;
+        if (UserName is not null)
         {
-            ["page"] = currentPage.ToString()
-        };
-        navigation.NavigateTo(QueryHelpers.AddQueryString($"/s/{Subject}/{LectureName}", queryParams), true);
+            StudentUser = await userManager.FindByNameAsync(UserName);
+            Lecture = await _dbcontext.lectures.FirstOrDefaultAsync(l => l.Name == LectureName);
+            StudentAnswers = await GetStudentQuestionAnswers();
+            foreach (var sq in StudentAnswers) FindStudentAnswer[sq.questionId] = sq;
+        }
+
+        await QuestionsByType(questionType);
+        isLoading = false;
+        await InvokeAsync(StateHasChanged);
     }
 
 }

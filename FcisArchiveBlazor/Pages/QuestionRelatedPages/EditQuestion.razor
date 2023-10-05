@@ -11,7 +11,7 @@
         <div class="card mb-3 Qcard">
 
             <EditForm OnValidSubmit="SubmitEditedQuestion" Context="editQContext" Model="Question">
-                <DataAnnotationsValidator/>
+                <DataAnnotationsValidator />
 
                 <div class="card-body">
                     <div class="d-flex gap-4 mb-4 justify-content-between align-items-center">
@@ -19,7 +19,7 @@
                                        class="card-title w-100 form-control-lg fw-bolder alertinfo d-inline">
                             @Question.Text
                         </InputTextArea>
-                        <ValidationMessage For="() => Question.Text"/>
+                        <ValidationMessage For="() => Question.Text" />
 
                         <div>
                             <a class="d-block btn btn-outline-secondary"
@@ -33,14 +33,14 @@
                         <div>
 
                             <label>Change Question Photo</label>
-                            <InputFile OnChange="SavePhoto" class="form-control form-control"/>
+                            <InputFile OnChange="SavePhoto" class="form-control form-control" />
                             <div>
                                 @if (Question.answers is not null && Question.answers.Any())
                                 {
                                     @foreach (var ans in Question.answers)
                                     {
                                         <div class="d-flex justify-content-around align-items-center "
-                                             @onclick="StateHasChanged">
+                                        @onclick="StateHasChanged">
                                             <div class="card mx-4 my-3">
                                                 <div class="card-body">
                                                     <InputText @bind-Value="@ans.Text" class="form-control fw-bold">
@@ -51,12 +51,12 @@
                                             @if (ans.IsCorrect)
                                             {
                                                 <input type="radio" class="form-check-input" name="ansCorrecties" checked
-                                                       value="@ans.IsCorrect" @onclick="async () =>{ var correct = Question.answers.FirstOrDefault(a => a.IsCorrect); if (correct is not null) correct.IsCorrect = false; ans.IsCorrect = true; await _dbcontext.SaveChangesAsync(); }"/>
-                                                }
-                                                else
-                                                {
+                                                       value="@ans.IsCorrect" @onclick="async () =>{ var correct = Question.answers.FirstOrDefault(a => a.IsCorrect); if (correct is not null) correct.IsCorrect = false; ans.IsCorrect = true; await _dbcontext.SaveChangesAsync(); }" />
+                                            }
+                                            else
+                                            {
                                                 <input type="radio" class="form-check-input" name="ansCorrecties"
-                                                       value="@ans.IsCorrect" @onclick="async () =>{ var correct = Question.answers.FirstOrDefault(a => a.IsCorrect); if (correct is not null) correct.IsCorrect = false; ans.IsCorrect = true; await _dbcontext.SaveChangesAsync(); }"/>
+                                                       value="@ans.IsCorrect" @onclick="async () =>{ var correct = Question.answers.FirstOrDefault(a => a.IsCorrect); if (correct is not null) correct.IsCorrect = false; ans.IsCorrect = true; await _dbcontext.SaveChangesAsync(); }" />
                                             }
                                             <div class="m-4 btn btn-danger" @onclick="() => Question.answers.Remove(ans)">
                                                 x
@@ -71,13 +71,13 @@
                                     <div class="alert alert-danger m-2 px-5" role="alert"> no answers </div>
                                 }
                                 <div class="btn btn-outline-secondary m-4 px-xxl-4"
-                                     @onclick="() =>{ Question.answers.Add(new Answer()); StateHasChanged(); }">
+                                @onclick="() =>{ Question.answers.Add(new Answer()); StateHasChanged(); }">
                                     + Create Answer
                                 </div>
 
                                 <details class="my-3">
                                     <summary class="alert-danger d-inline fw-bold">Click Me For a Hint</summary>
-                                    <br/>
+                                    <br />
                                     <InputText @bind-Value="@Question.Hint" class="alert-warning d-inline fw-bolder">
                                         @Question.Hint
                                     </InputText>
@@ -90,17 +90,17 @@
 
                             @if (Question.Photo is not null)
                             {
-                                <img alt="Question Photo" src="@Question.Photo" width="400"/>
+                                <img alt="Question Photo" src="@Question.Photo" width="400" />
 
-                                <br/>
+                                <br />
 
-                                <br/>
+                                <br />
 
                                 <div @onclick="() => { Question.Photo = null; }" class="btn btn-danger">delete photo</div>
                             }
                             else
                             {
-                                <img alt="No Question Photo" class="d-block" src="QuestionsPhotos/404notfound.png" width="400"/>
+                                <img alt="No Question Photo" class="d-block" src="QuestionsPhotos/404notfound.png" width="400" />
                             }
                         </div>
 
@@ -116,7 +116,7 @@
                                 <option value="@sub.Id"> @sub.Name </option>
                             }
                         </select>
-                        <ValidationMessage For="() => Question.SubjectId"/>
+                        <ValidationMessage For="() => Question.SubjectId" />
 
                     </div>
 
@@ -137,7 +137,7 @@
                                 <option value="0"> Select Subject First </option>
                             }
                         </InputSelect>
-                        <ValidationMessage For="() => Question.LectureId"/>
+                        <ValidationMessage For="() => Question.LectureId" />
 
                     </div>
 
@@ -151,6 +151,18 @@
                     <ul>
                         <li class="m-1 d-inline-block alert-success">@SavedChanges.Last()</li>
                     </ul>
+                }
+                @if(Errors.Any())
+                {
+                    @foreach (var error in Errors)
+                    {
+                        <ul>
+                            @foreach (var err in error)
+                            {
+                                <li class="m-1 d-inline-block alert-danger">@err</li>
+                            }
+                        </ul>
+                    }
                 }
             </EditForm>
 
@@ -185,10 +197,7 @@
     List<LectureDto> Lectures { get; set; }
     public Question Question { get; set; } = new();
     public Queue<string> SavedChanges { get; set; } = new();
-    // SubjectDTO subjectDTO { get; set; }
-    // LectureDTO lectureDTO { get; set; }
-    // public string statePhoto { get; set; }
-    // public bool editMood { get; set; }
+public List<List<string>> Errors { get; set; } = new();
 
     protected override void OnInitialized()
     {
@@ -205,24 +214,23 @@
 
     async void SubmitEditedQuestion()
     {
-    // removing the cache of the old lecture
-        cache.Remove(Question.Lecture.Name);
-        cache.Remove("questionCount" + Question.Lecture.Name);
+        // removing the cache of the old lecture
 
+        await ClearCache(Question);
         _dbcontext.Update(Question);
         await _dbcontext.SaveChangesAsync();
-    // removing the cache of the new lecture
-        cache.Remove(Question.Lecture.Name);
-        cache.Remove("questionCount" + Question.Lecture.Name);
+        // removing the cache of the new lecture
+        await ClearCache(Question);
+
 
         await Task.Run(async () =>
-        {
-            SavedChanges.Enqueue("Saved Changes");
-            await InvokeAsync(StateHasChanged);
-            await Task.Delay(TimeSpan.FromSeconds(4));
-            SavedChanges.Dequeue();
-            await InvokeAsync(StateHasChanged);
-        });
+            {
+                SavedChanges.Enqueue("Saved Changes");
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(TimeSpan.FromSeconds(4));
+                SavedChanges.Dequeue();
+                await InvokeAsync(StateHasChanged);
+            });
     }
 
     async void SavePhoto(InputFileChangeEventArgs input)
@@ -267,6 +275,35 @@
         catch (Exception ex)
         {
             Console.WriteLine(ex);
+        }
+    }
+
+
+    async Task ClearCache(Question question)
+    {
+        try
+        {
+
+            cache.Remove("questionCount" + question.Lecture.Name);
+            // clearing the cache for the pagination
+            var questionCount = await _dbcontext.questions.Where(q => q.LectureId == question.LectureId).LongCountAsync();
+            var pages = (decimal)questionCount / 20;
+            pages = Math.Ceiling(pages);
+            foreach (var page in Enumerable.Range(1, (int)pages))
+            {
+                cache.Remove($"p{page}" + question.Lecture.Name);
+            }
+        }
+        catch (Exception ex)
+        {
+            List<string> strings = new()
+            {
+                "Couldn't clear cache for " + question.Text,
+                ex.Message
+            };
+            if (ex.InnerException != null) strings.Add(ex.InnerException.Message);
+            Errors.Add(strings);
+            StateHasChanged();
         }
     }
 

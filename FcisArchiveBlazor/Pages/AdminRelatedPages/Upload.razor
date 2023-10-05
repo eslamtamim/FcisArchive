@@ -224,8 +224,9 @@
             var fileUploadSaving = await _dbcontext.SaveChangesAsync();
 
             var text = PDFtoText.pdfText(filePath);
-            // var regexPattern = @"(\d+)\)([\s\S]*?)\(page\s(.+?)\)";
-            var regexPattern = @"(\d+)\)([\s\S]*?)\(Slide\s(.+?)\)";
+            // var regexPattern = @"(?i)(\d+)\)([\s\S]*?)((?=\d+\))|\((Page|slide|)\s(.+?)\))";
+            var regexPattern = @"(?i)(\d+)\)([\s\S]*?)((?=\d+\))|\((.+?)\))";
+
             Regex regex = new Regex(regexPattern);
             MatchCollection matches = regex.Matches(text);
 
@@ -239,30 +240,52 @@
             // start working with the regex regexResult
             foreach (Match match in matches)
             {
-                var regexResult = match.Value.Trim().Split('\n').ToList();
-                Question question = new Question();
+                try
+                {
+                    var regexResult = match.Value.Trim().Split('\n').ToList();
+                    Question question = new Question();
 
-                // initializing the question
-                bool stateOfTheQuestion = AddingQuestion(regexResult, ref question, fileUploadSaving, fileUpload.FileId);
-                if (stateOfTheQuestion is false) continue;
+                    // initializing the question
+                    bool stateOfTheQuestion = AddingQuestion(regexResult, ref question, fileUploadSaving, fileUpload.FileId);
+                    if (stateOfTheQuestion is false) continue;
 
-                // removing the question text and the hint from the list of the regex regexResult to end up with just the answers
-                regexResult.Remove(regexResult.First());
-                regexResult.Remove(regexResult.Last());
+                    // removing the question text and the hint from the list of the regex regexResult to end up with just the answers
+                    regexResult.Remove(regexResult.First());
+                    if (regexResult.Last().Contains("Page") || regexResult.Last().Contains("slide") || (regexResult.Last()[..3].Contains('(') && regexResult.Last()[(regexResult.Last().Length - 4)..].Contains(')')))
+                    {
+                        question.Hint = regexResult.Last();
+                        regexResult.Remove(regexResult.Last());
+                    }
 
 
-                // adding the question to the database and updating the cache and the ui
-                var statesOfTrimmingTheRegexResult = TrimmingTheRegexResult(regexResult, ref question, fileUploadSaving, fileUpload.FileId, file.Name);
-                if (statesOfTrimmingTheRegexResult is false) continue;
+                    // adding the question to the database and updating the cache and the ui
+                    var statesOfTrimmingTheRegexResult = TrimmingTheRegexResult(regexResult, ref question, fileUploadSaving, fileUpload.FileId, file.Name);
+                    if (statesOfTrimmingTheRegexResult is false) continue;
 
-                // deciding the question type - i know it's bad as fuck, but until i find a better way;
-                if (regexResult.Count() == 2 && regexResult.First().Contains("T") && regexResult.First().Trim().Length <= 6) question.QuestionType = QuestionType.TrueFalse;
-                else question.QuestionType = QuestionType.MCQ;
+                    // deciding the question type - i know it's bad as fuck, but until i find a better way;
+                    if (regexResult.Count() == 2 && regexResult.First().Contains("T") && regexResult.First().Trim().Length <= 6) question.QuestionType = QuestionType.TrueFalse;
+                    else question.QuestionType = QuestionType.MCQ;
 
-                // initializing the answers
-                AddingAnswers(regexResult, ref question, fileUploadSaving, fileUpload.FileId);
+                    // initializing the answers
+                    AddingAnswers(regexResult, ref question, fileUploadSaving, fileUpload.FileId);
 
-                await ClearCache(question);
+                    await ClearCache(question);
+                }
+                catch (Exception e)
+                {
+                    List<string> currentFileErrors = new()
+                    {
+                        $"An Error happened while adding the question {match.Value}, try again or contact the Admin",
+                        e.Message,
+                        e!.ToString()
+                    };
+                    Exception ex = new(e.Message, new Exception($"An Error happened while adding the question {match.Value}, try again or contact the Admin"))
+                        {
+                            Source = e.Source
+                        };
+                    Errors.Add(currentFileErrors);
+                    SaveErrorsToDb(ex, fileUploadSaving, fileUpload.FileId);
+                }
             }
 
             FilesDone.Add(Filename);
@@ -321,8 +344,8 @@
             // adding the subject to the database and updating the cache and the ui
 
             Subject.Name = normalizedFileName.Split('-').First();
-            Subject temp = _dbcontext.subjects.FirstOrDefault(s => s.Name == Subject.Name);
-            if (temp is null)
+            Subject tempSubject = _dbcontext.subjects.FirstOrDefault(s => s.Name == Subject.Name);
+            if (tempSubject is null)
             {
                 try
                 {
@@ -334,24 +357,33 @@
                     SaveErrorsToDb(ex, fileUploadSaving, fileUploadId);
                 }
             }
-            else
-            {
-                Subject = temp;
-            }
+            else Subject = tempSubject;
 
-            Lecture = new()
-                {
-                    SubjectId = Subject.Id,
-                    UploaderId = UserId,
-                    Name = normalizedFileName,
-                };
-            _dbcontext.lectures.Add(Lecture);
+            Lecture tempLecture = _dbcontext.lectures.FirstOrDefault(l => l.Name == normalizedFileName);
+            if (tempLecture is null)
+            {
+                Lecture = new()
+                    {
+                        SubjectId = Subject.Id,
+                        UploaderId = UserId,
+                        Name = normalizedFileName,
+                    };
+                _dbcontext.lectures.Add(Lecture);
+            }
+            else Lecture = tempLecture;
 
             _dbcontext.SaveChanges();
         }
-        catch (Exception ex)
+        catch (Exception e)
         {
-            SaveErrorsToDb(ex, fileUploadSaving, fileUploadId);
+            List<string> currentFileErrors = new()
+            {
+                "An Error happened while opening the file or trying to copy, try again or contact the Admin",
+                e.Message,
+                e!.ToString()
+            };
+            Errors.Add(currentFileErrors);
+            SaveErrorsToDb(e, fileUploadSaving, fileUploadId);
         }
     }
 
@@ -387,7 +419,6 @@
                     LectureId = Lecture.Id,
                     Text = regexResult.First(),
                     AuthorName = AuthorName,
-                    Hint = regexResult.Last(),
                 };
         }
 
@@ -494,18 +525,17 @@
     void SaveErrorsToDb(Exception ex, int fileUploadSaving, int fileUploadId)
     {
         if (fileUploadSaving == 0) return;
-        if (ex.InnerException != null)
-        {
-            FileErrors fileError = new()
-                {
-                    ErrorTitle = ex.Source,
-                    ErrorMessage = ex.Message,
-                    ErrorDescription = ex.InnerException.Message,
-                    FileId = fileUploadId
-                };
-            FileErrors.Add(fileError);
-            _dbcontext.FileErrors.Add(fileError);
-        }
+
+        FileErrors fileError = new()
+            {
+                ErrorTitle = ex.Source,
+                ErrorMessage = ex.Message,
+                ErrorDescription = ex.InnerException?.Message ?? ex.Message,
+                FileId = fileUploadId
+            };
+        FileErrors.Add(fileError);
+        _dbcontext.FileErrors.Add(fileError);
+
         _dbcontext.SaveChanges();
     }
 

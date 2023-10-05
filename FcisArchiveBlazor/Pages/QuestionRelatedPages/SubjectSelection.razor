@@ -1,13 +1,20 @@
-﻿@page "/s/{year:int}/{subject}"
+﻿@page "/s/{subject}"
 @inject ApplicationDbContext _dbcontext
 @inject IMemoryCache cache
 
+<style>
+    @@media (max-width: 1000px) {
+        #lecs {
+            flex-direction: column;
+        }
+    }
+</style>
 
-<h3>@Subject</h3>
+<h3>@subject</h3>
 
 @if (_lectures is null)
 {
-    <Loading/>
+    <Loading />
 }
 else if (!_lectures.Any())
 {
@@ -17,14 +24,23 @@ else if (!_lectures.Any())
 }
 else
 {
-    <div class="d-flex flex-wrap justify-content-sm-around align-content-center">
-        @foreach (var lecture in _lectures)
-        {
-            <a class="btn btn-outline-secondary fw-bold m-2 p-2" href="/s/@Subject/@lecture">
-                @lecture
-            </a>
-        }
+    <div class="d-flex justify-content-between flex-column">
+        <div class="d-flex justify-content-around mt-5" id="lecs">
+            <img width="260" alt="subject photo cover" src="/SubjectsPhotos/@(subject).png" />
+
+            <div class="d-flex flex-wrap justify-content-sm-around align-content-center">
+
+                @foreach (var lecture in _lectures)
+                {
+                    <a class="btn btn-outline-secondary fw-bold m-2 p-2" href="/s/@subject/@lecture?page=1">
+                        @lecture
+                    </a>
+                }
+            </div>
+        </div>
+        <MadeWithLove />
     </div>
+
 }
 
 
@@ -32,7 +48,7 @@ else
 @code {
 
     [Parameter]
-    public string Subject { get; set; }
+    public string subject { get; set; }
 
     [Parameter]
     public int Year { get; set; }
@@ -41,11 +57,11 @@ else
 
     protected override Task OnInitializedAsync()
     {
-        _lectures = cache.GetOrCreate(nameof(_lectures) + Subject, entry =>
-        {
-            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
-            return _dbcontext.lectures.Where(l => l.Subject.Name == Subject).Select(l => l.Name).ToList();
-        });
+        _lectures = cache.GetOrCreate("lectures" + subject, (entry) =>
+         {
+             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
+             return _dbcontext.lectures.Where(x => x.Subject.Name == subject).Select(l => l.Name).ToList();
+         });
         return base.OnInitializedAsync();
     }
 

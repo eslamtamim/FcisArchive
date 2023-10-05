@@ -125,7 +125,7 @@
                     </div>
 
                 </div>
-                <button class="btn btn-secondary mx-5 my-3">Ad Question</button>
+                <button class="btn btn-secondary mx-5 my-3">Add Question</button>
             </EditForm>
 
         </div>
@@ -203,7 +203,7 @@
             if (SubjectDto is not null) nav.NavigateTo(nav.BaseUri + $"s/{SubjectDto.Name}/{LectureDto.Name}#{Question.Id}", false, true);
             else nav.NavigateTo(nav.BaseUri);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
     // ignored
         }

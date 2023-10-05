@@ -1,4 +1,16 @@
-﻿.banter-loader {
+﻿@media (min-width: 641px) {
+    .banter-loader {
+        left: 100%;
+        top: 100%;
+        width: 72px;
+        height: 72px;
+        margin-left: 90px;
+        margin-top: -36px;
+    }
+}
+
+
+.banter-loader {
     position: absolute;
     left: 50%;
     top: 50%;
