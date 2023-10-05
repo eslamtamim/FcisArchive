@@ -7,6 +7,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using FcisArchiveBlazor.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -19,9 +20,9 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
     public class ForgotPasswordModel : PageModel
     {
         private readonly UserManager<FCISQuestionsHub.Core.Models.StudentUser> _userManager;
-        private readonly IEmailSender _emailSender;
+        private readonly IMaillingService _emailSender;
 
-        public ForgotPasswordModel(UserManager<FCISQuestionsHub.Core.Models.StudentUser> userManager, IEmailSender emailSender)
+        public ForgotPasswordModel(UserManager<FCISQuestionsHub.Core.Models.StudentUser> userManager, IMaillingService emailSender)
         {
             _userManager = userManager;
             _emailSender = emailSender;
@@ -54,7 +55,8 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
             if (ModelState.IsValid)
             {
                 var user = await _userManager.FindByEmailAsync(Input.Email);
-                if (user == null || !(await _userManager.IsEmailConfirmedAsync(user)))
+                var isEmailConfirmed = await _userManager.IsEmailConfirmedAsync(user);
+                if (user == null  || !isEmailConfirmed )
                 {
                     // Don't reveal that the user does not exist or is not confirmed
                     return RedirectToPage("./ForgotPasswordConfirmation");

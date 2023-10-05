@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading;
 using System.Threading.Tasks;
+using FcisArchiveBlazor.Services;
 using FCISQuestionsHub.Core.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -24,19 +25,19 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
 {
     public class RegisterModel : PageModel
     {
-        private readonly SignInManager<FCISQuestionsHub.Core.Models.StudentUser> _signInManager;
-        private readonly UserManager<FCISQuestionsHub.Core.Models.StudentUser> _userManager;
-        private readonly IUserStore<FCISQuestionsHub.Core.Models.StudentUser> _userStore;
-        private readonly IUserEmailStore<FCISQuestionsHub.Core.Models.StudentUser> _emailStore;
+        private readonly SignInManager<StudentUser> _signInManager;
+        private readonly UserManager<StudentUser> _userManager;
+        private readonly IUserStore<StudentUser> _userStore;
+        private readonly IUserEmailStore<StudentUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
-        private readonly IEmailSender _emailSender;
+        private readonly IMaillingService _emailSender;
 
         public RegisterModel(
-            UserManager<FCISQuestionsHub.Core.Models.StudentUser> userManager,
-            IUserStore<FCISQuestionsHub.Core.Models.StudentUser> userStore,
-            SignInManager<FCISQuestionsHub.Core.Models.StudentUser> signInManager,
+            UserManager<StudentUser> userManager,
+            IUserStore<StudentUser> userStore,
+            SignInManager<StudentUser> signInManager,
             ILogger<RegisterModel> logger,
-            IEmailSender emailSender)
+            IMaillingService emailSender)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -171,11 +172,11 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
             return Page();
         }
 
-        private FCISQuestionsHub.Core.Models.StudentUser CreateUser()
+        private StudentUser CreateUser()
         {
             try
             {
-                return Activator.CreateInstance<FCISQuestionsHub.Core.Models.StudentUser>();
+                return Activator.CreateInstance<StudentUser>();
             }
             catch
             {
@@ -185,13 +186,13 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
             }
         }
 
-        private IUserEmailStore<FCISQuestionsHub.Core.Models.StudentUser> GetEmailStore()
+        private IUserEmailStore<StudentUser> GetEmailStore()
         {
             if (!_userManager.SupportsUserEmail)
             {
                 throw new NotSupportedException("The default UI requires a user store with email support.");
             }
-            return (IUserEmailStore<FCISQuestionsHub.Core.Models.StudentUser>)_userStore;
+            return (IUserEmailStore<StudentUser>)_userStore;
         }
     }
 }

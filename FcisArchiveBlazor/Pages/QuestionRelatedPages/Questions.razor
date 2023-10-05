@@ -65,18 +65,18 @@ else
         </div>
 
         <div class="pagesAndCount my-4 d-flex justify-content-between align-items-center">
-           @*  <div class="d-flex flex-column">
-                <div class="d-flex m-4 justify-content-center align-content-center gap-2 align-items-center flex-wrap">
+            @*  <div class="d-flex flex-column">
+        <div class="d-flex m-4 justify-content-center align-content-center gap-2 align-items-center flex-wrap">
 
-                    @foreach (var currentPage in Enumerable.Range(1, (int)pages))
-                    {
-                        <a class=" btn @(page  == currentPage ? "btn-secondary" : "btn-outline-secondary")" @onclick="()=>{SetPage(currentPage);}" href="/s/@Subject/@LectureName?page=@currentPage">
-                            @currentPage.ToString()
-                        </a>
-                    }
+        @foreach (var currentPage in Enumerable.Range(1, (int)pages))
+        {
+        <a class=" btn @(page  == currentPage ? "btn-secondary" : "btn-outline-secondary")" @onclick="()=>{SetPage(currentPage);}" href="/s/@Subject/@LectureName?page=@currentPage">
+        @currentPage.ToString()
+        </a>
+        }
 
-                </div>
-            </div> *@
+        </div>
+        </div> *@
             <p class="fw-bolder align-self-end m-0 mx-3"> Questions Count : <span class="alert-info"> @QuestionCount </span> </p>
 
             <div>
@@ -94,7 +94,7 @@ else
         }
 
         <div class="d-flex flex-column justify-content-center align-items-center">
-            <div class="d-flex m-4 justify-content-center align-content-center gap-2 align-items-center flex-wrap">
+            <div id="pages" class="d-flex m-4 justify-content-center align-content-center gap-2 align-items-center flex-wrap">
 
                 @foreach (var currentPage in Enumerable.Range(1, (int)pages))
                 {
@@ -110,6 +110,13 @@ else
         </div>
     </div>
     <MadeWithLove />
+
+    <div class="sticky"> 
+        <div class="d-flex justify-content-end">
+            <button id="scrollButton" onclick="scrollToBottom()" class="btn btn-outline-warning oi oi-arrow-bottom"></button>
+        </div>
+    </div>
+
 }
 
 
@@ -172,7 +179,7 @@ else
             if (Lecture is null)
             {
                 _errors.Add("Lecture not found");
-                FilteredQuestions = new();  
+                FilteredQuestions = new();
                 return;
             }
             StudentAnswers = await GetStudentQuestionAnswers();
@@ -337,3 +344,11 @@ else
 
 }
 
+<script>
+    function scrollToBottom() {
+        window.scrollTo({
+            top: document.body.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
+</script>

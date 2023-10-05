@@ -7,6 +7,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using FcisArchiveBlazor.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -19,12 +20,12 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account.Manage
     {
         private readonly UserManager<FCISQuestionsHub.Core.Models.StudentUser> _userManager;
         private readonly SignInManager<FCISQuestionsHub.Core.Models.StudentUser> _signInManager;
-        private readonly IEmailSender _emailSender;
+        private readonly IMaillingService _emailSender;
 
         public EmailModel(
             UserManager<FCISQuestionsHub.Core.Models.StudentUser> userManager,
             SignInManager<FCISQuestionsHub.Core.Models.StudentUser> signInManager,
-            IEmailSender emailSender)
+            IMaillingService emailSender)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -128,7 +129,7 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account.Manage
                     "Confirm your email",
                     $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
-                StatusMessage = "Confirmation link to change email sent. Please check your email.";
+                StatusMessage = $"Confirmation link to change email sent to {Input.NewEmail}. Please check your email.";
                 return RedirectToPage();
             }
 

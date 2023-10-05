@@ -7,6 +7,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using FcisArchiveBlazor.Services;
 using FCISQuestionsHub.Core.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -21,9 +22,9 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
     public class ResendEmailConfirmationModel : PageModel
     {
         private readonly UserManager<FCISQuestionsHub.Core.Models.StudentUser> _userManager;
-        private readonly IEmailSender _emailSender;
+        private readonly IMaillingService _emailSender;
 
-        public ResendEmailConfirmationModel(UserManager<FCISQuestionsHub.Core.Models.StudentUser> userManager, IEmailSender emailSender)
+        public ResendEmailConfirmationModel(UserManager<StudentUser> userManager, IMaillingService emailSender)
         {
             _userManager = userManager;
             _emailSender = emailSender;
@@ -82,7 +83,7 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
                 "Confirm your email",
                 $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
-            ModelState.AddModelError(string.Empty, "Verification email sent. Please check your email.");
+            ModelState.AddModelError(string.Empty, "Verification email sent. Please check your email. You should be expecting an email from us shortly from mimatmalxe@outlook.com, make sure to check the spam \n if you didn't find in inbox contact me on telegram @mimatmalxe.");
             return Page();
         }
     }

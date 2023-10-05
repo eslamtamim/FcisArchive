@@ -33,9 +33,12 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<StudentUser>>();
 builder.Services.AddSingleton(typeof(IBaseRepo<>), typeof(BaseRepo<>));
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
+
+//sending mails to users, using mailkit
 builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
 builder.Services.AddTransient<IMaillingService, MaillingService>();
 
+// cashing service
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient();
 
