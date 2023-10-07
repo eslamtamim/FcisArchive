@@ -78,7 +78,7 @@ else
 
         </div>
         </div> *@
-            <p class="fw-bolder align-self-end m-0 mx-3"> Questions Count : <span class="alert-info"> @QuestionCount </span> </p>
+            <p class="fw-bolder align-self-end m-0 mx-3"> Questions Solved : <span class="alert-info"> @QuestionsSolved / @QuestionCount </span> </p>
 
             <div>
                 <button class="btn @(questionType is null ? "btn-primary" : "btn-outline-primary")" @onclick="() => QuestionsByType(null)">All</button>
@@ -145,6 +145,7 @@ else
     const int DatabaseSelectionChunk = 20;
     bool isLoading = false;
     long QuestionCount { get; set; }
+    long QuestionsSolved { get; set; }
     string UserName { get; set; }
     QuestionType? questionType = null;
 
@@ -190,6 +191,10 @@ else
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
             return _dbcontext.questions.LongCount(q => q.Lecture.Name == LectureName);
         });
+        QuestionsSolved = _dbcontext.studentQuestionAnswer.LongCount(q => q.question.Lecture.Name == LectureName && q.student.UserName == UserName);
+
+
+
         pages = (decimal)QuestionCount / DatabaseSelectionChunk;
         pages = Math.Ceiling(pages);
 

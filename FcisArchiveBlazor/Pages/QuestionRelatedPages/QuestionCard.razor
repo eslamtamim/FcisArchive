@@ -22,7 +22,6 @@
         font-family: 'Roboto', sans-serif;
     }
 
-
 </style>
 @if (Question is null && !notFound)
 {
@@ -332,14 +331,23 @@ else
         navigation.NavigateTo(navigation.BaseUri + "EditQuestion/" + Question.Id, true, true);
     }
 
-    async Task ResetQuestionAnswer()
+    void ResetQuestionAnswer()
     {
+
         if (StudentAnswer is not null)
         {
-            _dbcontext.studentQuestionAnswer.Remove(StudentAnswer);
-            StudentAnswer = null;
-            await _dbcontext.SaveChangesAsync();
-            StateHasChanged();
+            try
+            {
+                _dbcontext.studentQuestionAnswer.Remove(StudentAnswer);
+                StudentAnswer = null;
+                _dbcontext.SaveChanges();
+                StateHasChanged();
+            }
+            catch (Exception)
+            {
+
+            }
+
         }
     }
 
