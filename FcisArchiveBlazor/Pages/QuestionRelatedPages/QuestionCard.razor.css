@@ -1,1 +1,7 @@
-﻿
+﻿@media (max-width: 750px) {
+
+    #clipboardcopyicon {
+        width: 15px;
+        height: 15px;
+    }
+}

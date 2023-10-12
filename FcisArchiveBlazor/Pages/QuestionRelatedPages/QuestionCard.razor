@@ -22,6 +22,11 @@
         font-family: 'Roboto', sans-serif;
     }
 
+    #clipboardcopy{
+        cursor: pointer;
+        display: inline-flex;
+        padding: 0;
+    }
 </style>
 @if (Question is null && !notFound)
 {
@@ -148,7 +153,7 @@ else
                                     </div>
                                 }
                             }
-                            else
+                            else 
                             {
                                 if (ans.IsCorrect)
                                 {
@@ -194,9 +199,8 @@ else
                     <p class="fw-bold  d-inline ">
                         @Question.Lecture.Name
                     </p>
-                    <p class="small" style="margin-bottom: 4px">
-                        Question ID : @Question.Id | @(Question.QuestionType == 0 ? "MCQ" : "True & False") | Author : @Question.AuthorName
-                    </p>
+
+                    
                 </div>
                 <div class="d-flex justify-content-between gap-1 align-items-center">
                     <button class="btn btn-outline-warning" @onclick="ResetQuestionAnswer">Reset</button>
@@ -212,10 +216,16 @@ else
                     }
                 </div>
 
+           
 
             </div>
 
-
+            <p class="small" style="margin-bottom:-5px; margin-top:18px;">
+                <span id="clipboardcopy" onclick="copyToClipboard()" class="btn btn-outline-secondary small ">
+                    <svg id="clipboardcopyicon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M8 5v0a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v0M8 5v0a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v0" /></svg>
+                </span>
+                <span id="copied"> Question ID </span> : <span id="textToCopy"> @Question.Id </span>| @(Question.QuestionType == 0 ? "MCQ" : "True & False") | Author : @Question.AuthorName
+            </p>
         </div>
         @if (Errors.Any())
         {
@@ -351,4 +361,34 @@ else
         }
     }
 
-}
+}<script>
+     function copyToClipboard() {
+
+         let textToCopy = "https://fcis-archive-blazor.azurewebsites.net/question/";
+         textToCopy += document.getElementById('textToCopy').innerText;
+
+         const textarea = document.createElement('textarea');
+         textarea.value = textToCopy;
+         document.body.appendChild(textarea);
+
+         textarea.select();
+         textarea.setSelectionRange(0, 99999); // For mobile devices
+
+         // Copy the selected text to the clipboard
+         document.execCommand('copy');
+         document.body.removeChild(textarea);
+
+         const copiedToClipboard = document.getElementById("copied");
+         copiedToClipboard.innerText = "Question Link Copied";
+
+         setTimeout(() => {
+             copiedToClipboard.innerText = "Question ID";
+         }, 2000);
+
+
+         // Alert the user or provide feedback
+         // alert('Text copied to clipboard: ' + textToCopy.value);
+
+
+     }
+</script>
