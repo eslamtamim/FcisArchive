@@ -1,12 +1,41 @@
 ﻿@page "/scoreboard"
 @inject ApplicationDbContext _context
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+
 
 <!DOCTYPE html>
 <html>
 <head>
     <title>Scoreboard</title>
+    <style>
+
+        @@media (max-width: 750px) {
+
+            .wrap {
+                display: flex;
+                flex-direction: column-reverse;
+            }
+
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+
+            th, td {
+                text-align: left;
+                padding: 8px;
+            }
+
+            tr:nth-child(even) {
+                background-color: #f2f2f2;
+            }
+        }
+
+    </style>
 </head>
+
 <body>
+
     <h3>Scoreboard</h3>
 
     <table>
@@ -18,8 +47,10 @@
             </tr>
         </thead>
         <tbody>
-            @{int i = 1;}
-            @foreach(var user in users)
+            @{
+                int i = 1;
+            }
+            @foreach (var user in ShowingNowUsers)
             {
                 <tr style=" @(user.QuestionsSolved >= 1000  ? "color:#008000;font-weight:bold;" : "") " class="">
                     <td>@(i++) @(i == 2 ? "  🥇" : "") @(i == 3 ? "  🥈" : "") @(i == 4 ? "  🥉" : "") </td>
@@ -29,6 +60,28 @@
             }
         </tbody>
     </table>
+
+    <br />
+    @if (ShowingNowUsers == TopUsers)
+    {
+        <button @onclick="()=>{ShowingNowUsers = users;}">Show More</button>
+    }
+    else
+    {
+        <button @onclick="()=>{ShowingNowUsers = TopUsers;}">Show less</button>
+    }
+
+    @*  <div>
+
+    <p>* You Need to solve at least 20 questions to get in the scoreboard.</p>
+    @if (ThisUser is not null)
+    {
+    <p>* You now have solved @ThisUser.QuestionsSolved question. Great Job, Keep Going </p>
+    }
+    <p>All users in the Scoreboard: @CountUsers</p>
+    </div> *@
+
+
 </body>
 </html>
 
@@ -37,18 +90,30 @@
     record User(string Id, string FirstName, string LastName, string UserName, int QuestionsSolved);
 
     List<User> users = new List<User>();
+    List<User> TopUsers = new();
+
+    List<User> ShowingNowUsers = new();
+    User ThisUser;
+    int CountUsers;
+    AuthenticationState UserAuth { get; set; }
+
 
     protected override async Task OnInitializedAsync()
     {
-       
-        
-        
+        UserAuth = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+
         users = (from sqa in _context.studentQuestionAnswer
-                 join s in _context.Users on  sqa.studentsId equals s.Id
+                 join s in _context.Users on sqa.studentsId equals s.Id
                  group s by new { s.Id, s.FirstName, s.LastName, s.UserName } into g
                  orderby g.Count() descending
                  select new User(g.Key.Id, g.Key.FirstName, g.Key.LastName, g.Key.UserName, g.Count())).ToList();
 
+        if (UserAuth.User.Identity is not null) ThisUser = users.FirstOrDefault(e => e.UserName == UserAuth.User.Identity.Name);
+
+        TopUsers = users.Where(u => u.QuestionsSolved >= 20).ToList();
+
+        ShowingNowUsers = TopUsers;
+        CountUsers = _context.Users.Count();
         // users = new List<User>
         // {
         //     new User("1", "John", "Doe", "johndoe", 1005),
@@ -57,7 +122,7 @@
         //     new User("4", "Jane", "Smith", "janesmith", 1200),
         //     new User("5", "John", "Jones", "johnjones", 50),
         // }.OrderByDescending(e=>e.QuestionsSolved).ToList();
-        
+
         await base.OnInitializedAsync();
     }
 

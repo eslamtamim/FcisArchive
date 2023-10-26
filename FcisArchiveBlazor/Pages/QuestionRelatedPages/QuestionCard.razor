@@ -22,7 +22,7 @@
         font-family: 'Roboto', sans-serif;
     }
 
-    #clipboardcopy{
+    #clipboardcopy {
         cursor: pointer;
         display: inline-flex;
         padding: 0;
@@ -44,7 +44,18 @@ else
         <div class="card-body">
             <div class="d-flex justify-content-between">
 
-                <h5 class=" card-title fw-bolder alertinfo d-inline ">@QuestionNumber@Question.Text[(Question.Text.IndexOf(')'))..]</h5>
+                @if (QuestionId == 0)
+                {
+                    <h5 class=" card-title fw-bolder alertinfo d-inline ">
+                        @QuestionNumber@Question.Text[(Question.Text.IndexOf(')'))..]
+                    </h5>
+                }
+                else
+                {
+                    <h5 class=" card-title fw-bolder alertinfo d-inline ">
+                        @Question.Text[(Question.Text.IndexOf(')')+1)..]
+                    </h5>
+                }
                 <AuthorizeView Roles="Admin, Super-Admin">
                     <div>
                         <a class="d-block btn btn-outline-secondary" href="/EditQuestion/@Question.Id">
@@ -153,7 +164,7 @@ else
                                     </div>
                                 }
                             }
-                            else 
+                            else
                             {
                                 if (ans.IsCorrect)
                                 {
@@ -200,7 +211,7 @@ else
                         @Question.Lecture.Name
                     </p>
 
-                    
+
                 </div>
                 <div class="d-flex justify-content-between gap-1 align-items-center">
                     <button class="btn btn-outline-warning" @onclick="ResetQuestionAnswer">Reset</button>
@@ -216,12 +227,12 @@ else
                     }
                 </div>
 
-           
+
 
             </div>
 
             <p class="small" style="margin-bottom:-5px; margin-top:18px;">
-                <span id="clipboardcopy" onclick="copyToClipboard(@Question.Id)" class="btn btn-outline-secondary small ">
+                <span id="clipboardcopy" onclick="copyToClipboard(@Question.Id,'@Question.Subject.Name','@Question.Lecture.Name')" class="btn btn-outline-secondary small ">
                     <svg id="clipboardcopyicon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M8 5v0a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v0M8 5v0a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v0" /></svg>
                 </span>
                 <span id="copied-@Question.Id"> Question ID </span> : <span id="@Question.Id"> @Question.Id </span> | @(Question.QuestionType == 0 ? "MCQ" : "True & False") | Author : @Question.AuthorName
@@ -367,41 +378,40 @@ else
 
 <script>
 
-     function getQueryParamValue(param) {
-         const urlParams = new URLSearchParams(window.location.search);
-         return urlParams.get(param);
-     }
+    function getQueryParamValue(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
 
-     function copyToClipboard(id) {
+    function copyToClipboard(id, subject, lecture) {
 
-         let textToCopy = "https://fcis-archive-blazor.azurewebsites.net/question/";
-         
-         textToCopy += id;
+        let textToCopy = "https://fcis-archive-blazor.azurewebsites.net/s/" + subject + "/" + lecture + "/" + id;
 
-         console.log(window.URL);
+
+        console.log(textToCopy);
 
 
         const textarea = document.createElement('textarea');
-         textarea.value = textToCopy;
-         document.body.appendChild(textarea);
+        textarea.value = textToCopy;
+        document.body.appendChild(textarea);
 
-         textarea.select();
-         textarea.setSelectionRange(0, 99999); // For mobile devices
+        textarea.select();
+        textarea.setSelectionRange(0, 99999); // For mobile devices
 
-         // Copy the selected text to the clipboard
-         document.execCommand('copy');
-         document.body.removeChild(textarea);
+        // Copy the selected text to the clipboard
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
 
-         const copiedToClipboard = document.getElementById('copied-'+id);
-         copiedToClipboard.innerText = "Question Link Copied";
+        const copiedToClipboard = document.getElementById('copied-' + id);
+        copiedToClipboard.innerText = "Question Link Copied";
 
-         setTimeout(() => {
-             copiedToClipboard.innerText = "Question ID";
-         }, 2000);
+        setTimeout(() => {
+            copiedToClipboard.innerText = "Question ID";
+        }, 2000);
 
-         // Alert the user or provide feedback
-         // alert('Text copied to clipboard: ' + textToCopy.value);
+        // Alert the user or provide feedback
+        // alert('Text copied to clipboard: ' + textToCopy.value);
 
 
-     }
+    }
 </script>
