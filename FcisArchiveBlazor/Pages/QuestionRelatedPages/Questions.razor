@@ -9,7 +9,7 @@
 @inject IMemoryCache cache
 
 
-    
+
 <div class="d-flex align-content-between justify-content-between">
     <div class="d-flex align-items-center justify-content-center align-content-center gap-3">
         <a class="btn btn-outline-secondary " href="/s/@Subject">&larr;</a>
@@ -66,18 +66,7 @@ else
         </div>
 
         <div class="pagesAndCount my-4 d-flex justify-content-between align-items-center">
-            @*  <div class="d-flex flex-column">
-        <div class="d-flex m-4 justify-content-center align-content-center gap-2 align-items-center flex-wrap">
 
-        @foreach (var currentPage in Enumerable.Range(1, (int)pages))
-        {
-        <a class=" btn @(page  == currentPage ? "btn-secondary" : "btn-outline-secondary")" @onclick="()=>{SetPage(currentPage);}" href="/s/@Subject/@LectureName?page=@currentPage">
-        @currentPage.ToString()
-        </a>
-        }
-
-        </div>
-        </div> *@
             <p class="fw-bolder align-self-end m-0 mx-3"> Questions Solved : <span class="alert-info"> @QuestionsSolved / @QuestionCount </span> </p>
 
             <div>
@@ -86,12 +75,17 @@ else
                 <button class="btn @(questionType is QuestionType.TrueFalse ? "btn-secondary" : "btn-outline-secondary")" @onclick="() => QuestionsByType(QuestionType.TrueFalse)">T&F</button>
             </div>
         </div>
-
+        @{
+            int questionNumber = ((page - 1) * DatabaseSelectionChunk)+1;
+        }
         @foreach (var question in FilteredQuestions!)
         {
+
             <QuestionCard Question="@question" IsAuthorized="@(UserName is not null)"
                           StudentAnswer="@(FindStudentAnswer.TryGetValue(question.Id, out var value) ? value : null)"
-                          StudentUser="@StudentUser" />
+                          StudentUser="@StudentUser"
+                          QuestionNumber="@questionNumber" />
+            questionNumber++;
         }
 
         <div class="d-flex flex-column justify-content-center align-items-center">
@@ -112,7 +106,7 @@ else
     </div>
     <MadeWithLove />
 
-    <div class="sticky"> 
+    <div class="sticky">
         <div class="d-flex justify-content-end">
             <button id="scrollButton" onclick="scrollToBottom()" class="btn btn-outline-warning oi oi-arrow-bottom"></button>
         </div>

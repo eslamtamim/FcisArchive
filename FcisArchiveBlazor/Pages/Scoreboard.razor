@@ -18,11 +18,11 @@
             </tr>
         </thead>
         <tbody>
-            @{int i = 0;}
+            @{int i = 1;}
             @foreach(var user in users)
             {
-                <tr>
-                    <td>@(++i)</td>
+                <tr style=" @(user.QuestionsSolved >= 1000  ? "color:#008000;font-weight:bold;" : "") " class="">
+                    <td>@(i++) @(i == 2 ? "  🥇" : "") @(i == 3 ? "  🥈" : "") @(i == 4 ? "  🥉" : "") </td>
                     <td>@user.FirstName @user.LastName</td>
                     <td>@user.QuestionsSolved</td>
                 </tr>
@@ -40,26 +40,24 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // string query = @"select s.""Id"", s.""FirstName"", s.""LastName"", s.""UserName"", COUNT(s.""Id"") as QuestionsSolved
-        //                  from ""studentQuestionAnswer"" sqa
-        //                  join security.""Users"" s on s.""Id"" = sqa.""studentsId""
-        //                  GROUP BY s.""Id""
-        //                  ORDER BY QuestionsSolved desc
-        //                  LIMIT 10";
-        // var queryResult = _context.studentQuestionAnswer.FromSqlRaw(query);
-
+       
+        
+        
         users = (from sqa in _context.studentQuestionAnswer
                  join s in _context.Users on  sqa.studentsId equals s.Id
                  group s by new { s.Id, s.FirstName, s.LastName, s.UserName } into g
                  orderby g.Count() descending
                  select new User(g.Key.Id, g.Key.FirstName, g.Key.LastName, g.Key.UserName, g.Count())).ToList();
 
-        // users = await _context.studentQuestionAnswer.GroupBy(s => s.student.Id)
-        //     .Select(s => new User(s.Key, s.FirstName, s.LastName, s.UserName, s.QuestionsSolved))
-        //     .OrderByDescending(s => s.QuestionsSolved)
-        //     .Take(10)
-        //     .ToListAsync();
-
+        // users = new List<User>
+        // {
+        //     new User("1", "John", "Doe", "johndoe", 1005),
+        //     new User("2", "Jane", "Doe", "janedoe", 1000),
+        //     new User("3", "John", "Smith", "johnsmith", 900),
+        //     new User("4", "Jane", "Smith", "janesmith", 1200),
+        //     new User("5", "John", "Jones", "johnjones", 50),
+        // }.OrderByDescending(e=>e.QuestionsSolved).ToList();
+        
         await base.OnInitializedAsync();
     }
 
