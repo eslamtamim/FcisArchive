@@ -2,7 +2,7 @@
     background-color: #e6e6e6;
     cursor: pointer;
 }
-#scrollButton {
+.scrollButton {
     position: sticky;
     bottom: 20px;
     right: 20px;

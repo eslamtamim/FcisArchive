@@ -108,7 +108,10 @@ else
 
     <div class="sticky">
         <div class="d-flex justify-content-end">
-            <button id="scrollButton" onclick="scrollToBottom()" class="btn btn-outline-warning oi oi-arrow-bottom"></button>
+        <div class="d-flex flex-column gap-2">
+                <button onclick="scrollToTop()" class="scrollButton oi oi-arrow-top"></button>
+                <button onclick="scrollToBottom()" class="scrollButton  oi oi-arrow-bottom"></button>
+        </div>   
         </div>
     </div>
 
@@ -349,4 +352,11 @@ else
             behavior: 'smooth'
         });
     }
+    function scrollToTop() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+
 </script>

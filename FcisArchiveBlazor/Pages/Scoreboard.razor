@@ -1,4 +1,5 @@
 ﻿@page "/scoreboard"
+@using Microsoft.AspNetCore.Mvc;
 @inject ApplicationDbContext _context
 @inject AuthenticationStateProvider GetAuthenticationStateAsync
 
@@ -7,79 +8,148 @@
 <html>
 <head>
     <title>Scoreboard</title>
-    <style>
-
-        @@media (max-width: 750px) {
-
-            .wrap {
-                display: flex;
-                flex-direction: column-reverse;
-            }
-
-            table {
-                border-collapse: collapse;
-                width: 100%;
-            }
-
-            th, td {
-                text-align: left;
-                padding: 8px;
-            }
-
-            tr:nth-child(even) {
-                background-color: #f2f2f2;
-            }
-        }
-
-    </style>
 </head>
 
 <body>
 
+
+
     <h3>Scoreboard</h3>
+    <span class="small" style="font-size:0.8rem;">
+        Users : <span class="fw-bolder" style="color:red;">@CountUsers </span>
+        &emsp; &emsp;
+        Questions Solved : <span class="fw-bolder" style="color:red;">@CountQuestionsSolved </span>
+    </span>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Rank</th>
-                <th>Full Name</th>
-                <th>Score</th>
-            </tr>
-        </thead>
-        <tbody>
-            @{
-                int i = 1;
-            }
-            @foreach (var user in ShowingNowUsers)
+    <div class=" ScoreContent m-2">
+
+        <div class="d-flex gap-5">
+            @foreach (var table in UsersDisplayed)
             {
-                <tr style=" @(user.QuestionsSolved >= 1000  ? "color:#008000;font-weight:bold;" : "") " class="">
-                    <td>@(i++) @(i == 2 ? "  🥇" : "") @(i == 3 ? "  🥈" : "") @(i == 4 ? "  🥉" : "") </td>
-                    <td>@user.FirstName @user.LastName</td>
-                    <td>@user.QuestionsSolved</td>
-                </tr>
+                var currTable = UsersDisplayed[table.Key];
+                if (currTable.Count == 0)
+                {
+                    if (AllTables[table.Key].Count == 0) continue;
+                    currTable = AllTables[table.Key];
+                }
+
+                <div>
+                    <h5>@table.Key Year </h5>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Full Name</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                int i = 1;
+                            }
+                            @foreach (var currUser in currTable)
+                            {
+                                string color = ColorOfName(currUser.QuestionsSolved);
+                                <tr style=" @(currUser.QuestionsSolved >= 1000  ? $"color:{color};font-weight:bold;" : "") " class="">
+                                    <td>@(i++) @(i == 2 ? "  🥇" : "") @(i == 3 ? "  🥈" : "") @(i == 4 ? "  🥉" : "") </td>
+                                    <td>
+                                        @(currUser.DisplayName is not null ? currUser.DisplayName : currUser.FirstName + " " + currUser.LastName)
+                                        @if (this.user is not null && currUser.Id == this.user.Id)
+                                        {
+                                            <span style="color:blue;"> (You)</span>
+                                        }
+                                    </td>
+                                    <td>@currUser.QuestionsSolved</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                    <br />
+                    @if (ShowMore[(int)table.Key])
+                    {
+                        <button @onclick="()=>{UsersDisplayed[table.Key] = AllTopTables[table.Key];
+                            ShowMore[(int)table.Key] = !ShowMore[(int)table.Key]; }">
+                            Show Less
+                        </button>
+                    }
+                    else
+                    {
+                        <button @onclick="()=>{UsersDisplayed[table.Key] = AllTables[table.Key];
+                            ShowMore[(int)table.Key] = !ShowMore[(int)table.Key];}">
+                            Show More
+                        </button>
+                    }
+
+                    @*  <div>
+
+                <p>* You Need to solve at least 20 questions to get in the scoreboard.</p>
+                @if (ThisUser is not null)
+                {
+                <p>* You now have solved @ThisUser.QuestionsSolved question. Great Job, Keep Going </p>
+                }
+                <p>All users in the Scoreboard: @CountUsers</p>
+                </div> *@
+                </div>
             }
-        </tbody>
-    </table>
+        </div>
 
-    <br />
-    @if (ShowingNowUsers == TopUsers)
-    {
-        <button @onclick="()=>{ShowingNowUsers = users;}">Show More</button>
-    }
-    else
-    {
-        <button @onclick="()=>{ShowingNowUsers = TopUsers;}">Show less</button>
-    }
+        @if (user is not null)
+        {
+            <div class="Scoreform  mx-5">
+                <EditForm Model="Input" Context="main" OnSubmit="ScoreboardFormSubmit">
+                    <label class="form-label">Display Name</label>
 
-    @*  <div>
+                    <div>
+                        <InputText @bind-Value="Input.DisplayName" class="form-control" placeholder="scoreboard Name." />
 
-    <p>* You Need to solve at least 20 questions to get in the scoreboard.</p>
-    @if (ThisUser is not null)
-    {
-    <p>* You now have solved @ThisUser.QuestionsSolved question. Great Job, Keep Going </p>
-    }
-    <p>All users in the Scoreboard: @CountUsers</p>
-    </div> *@
+                    </div>
+
+                    <label class="form-label">Academic Year</label>
+
+                    <div>
+
+
+                        <InputSelect @bind-Value="Input.AcademicYear" class="form-control" placeholder="Please choose Your Academic Year.">
+                            <option value="">Your Academic Year</option>
+
+                            @foreach (var item in Enum.GetValues(typeof(Year)))
+                            {
+                                <option value="@item">@item.ToString()</option>
+                            }
+
+                        </InputSelect>
+                    </div>
+                    @*
+                <label class="form-label">Department</label>
+
+                <div>
+
+
+                <InputSelect @bind-Value="Input.Department" class="form-control" placeholder="Please choose your Department.">
+
+                @foreach (var item in Enum.GetValues(typeof(Department)))
+                {
+                <option value="@item">@item.ToString()</option>
+                }
+
+                </InputSelect>
+                </div> *@
+                    @*
+                <div>
+                <label class="form-label">Section</label>
+                <InputNumber @bind-Value="Input.Section" class="form-control" placeholder="Your Section Number." />
+                </div>
+                *@
+                    <br>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </EditForm>
+
+            </div>
+        }
+    </div>
+
+
 
 
 </body>
@@ -87,44 +157,128 @@
 
 @code {
 
-    record User(string Id, string FirstName, string LastName, string UserName, int QuestionsSolved);
+    record User(string Id, string FirstName, string LastName, string UserName, int QuestionsSolved, string DisplayName, Department? Department, Year? Year);
 
-    List<User> users = new List<User>();
-    List<User> TopUsers = new();
+    class ScoreboardForm
+    {
+        [Required, MaxLength(50)]
+        public string DisplayName { get; set; }
+        [Required]
+        public Year? AcademicYear { get; set; }
+        [Required]
+        public Department? Department { get; set; }
+        [Required]
+        public int? Section { get; set; }
 
-    List<User> ShowingNowUsers = new();
-    User ThisUser;
+    }
+
+    ScoreboardForm Input = new();
+    bool DisplayForm = false;
+
+    Dictionary<Year, List<User>> AllTables = new();
+
+    Dictionary<Year, List<User>> AllTopTables = new();
+
+    bool[] ShowMore = new bool[5];
+    Dictionary<Year, List<User>> UsersDisplayed = new();
+
+    StudentUser user;
     int CountUsers;
+    int CountQuestionsSolved;
     AuthenticationState UserAuth { get; set; }
 
 
     protected override async Task OnInitializedAsync()
     {
+
         UserAuth = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
 
-        users = (from sqa in _context.studentQuestionAnswer
-                 join s in _context.Users on sqa.studentsId equals s.Id
-                 group s by new { s.Id, s.FirstName, s.LastName, s.UserName } into g
-                 orderby g.Count() descending
-                 select new User(g.Key.Id, g.Key.FirstName, g.Key.LastName, g.Key.UserName, g.Count())).ToList();
+        AllTables = new();
+        @foreach (var year in Enum.GetValues(typeof(Year)))
+        {
+            AllTables.Add((Year)year, GetUsers((Year)year));
+        }
 
-        if (UserAuth.User.Identity is not null) ThisUser = users.FirstOrDefault(e => e.UserName == UserAuth.User.Identity.Name);
 
-        TopUsers = users.Where(u => u.QuestionsSolved >= 20).ToList();
+        if (UserAuth.User.Identity is { Name: not null })
+        {
+            user = _context.Users.FirstOrDefault(e => e.UserName == UserAuth.User.Identity.Name);
+            if (user != null)
+                Input = new ScoreboardForm
+                    {
+                        DisplayName = user.DisplayName,
+                        AcademicYear = user.AcademicYear,
+                        Department = user.Department,
+                        Section = user.Section
+                    };
+        }
 
-        ShowingNowUsers = TopUsers;
+        AllTopTables = new();
+
+        @foreach (var year in Enum.GetValues(typeof(Year)))
+        {
+            AllTopTables.Add((Year)year, AllTables[(Year)year].Where(u => u.QuestionsSolved >= 50).ToList());
+        }
+        UsersDisplayed = new(AllTopTables);
+        // TopUsers = users.Where(u => u.QuestionsSolved >= 50).ToList();
+        // ShowingNowUsers = TopUsers;
+        // if (TopUsers.Count() == 0) ShowingNowUsers = users;
+
+
         CountUsers = _context.Users.Count();
+        CountQuestionsSolved = _context.studentQuestionAnswer.Count();
+
+
         // users = new List<User>
         // {
-        //     new User("1", "John", "Doe", "johndoe", 1005),
-        //     new User("2", "Jane", "Doe", "janedoe", 1000),
-        //     new User("3", "John", "Smith", "johnsmith", 900),
-        //     new User("4", "Jane", "Smith", "janesmith", 1200),
-        //     new User("5", "John", "Jones", "johnjones", 50),
-        // }.OrderByDescending(e=>e.QuestionsSolved).ToList();
+        //     new User("1", "John", "Doe", "johndoe", 1005,null,null,null),
+        //     new User("2", "Jane", "Doe", "janedoe", 3400,null,null,null),
+        //     new User("3", "John", "Smith", "johnsmith", 90000,null,null,null),
+        //     new User("4", "Jane", "Smith", "janesmith", 2200,null,null,null),
+        //     new User("5", "John", "Jones", "johnjones", 5000,null,null,null),
+        // }.OrderByDescending(e => e.QuestionsSolved).ToList();
 
         await base.OnInitializedAsync();
     }
 
+
+
+    List<User> GetUsers(Year year)
+    {
+
+        return (from sqa in _context.studentQuestionAnswer
+                join u in _context.Users on sqa.studentsId equals u.Id
+                join q in _context.questions on sqa.questionId equals q.Id
+                join s in _context.subjects on q.SubjectId equals s.Id
+                where s.Year == year
+                group u by new { u.Id, u.FirstName, u.LastName, u.UserName, u.DisplayName, u.Department, u.AcademicYear } into g
+                orderby g.Count() descending
+                select new User(g.Key.Id, g.Key.FirstName, g.Key.LastName, g.Key.UserName, g.Count(), g.Key.DisplayName, g.Key.Department, g.Key.AcademicYear)).ToList();
+
+    }
+
+
+
+    public string ColorOfName(int solvedQuestions)
+    {
+        if (solvedQuestions >= 1000 && solvedQuestions < 2000) return "#008000";
+        else if (solvedQuestions >= 2000 && solvedQuestions < 3000) return "#0000ff";
+        else if (solvedQuestions >= 3000 && solvedQuestions < 4000) return "#a0a";
+        else if (solvedQuestions >= 4000 && solvedQuestions < 5000) return "#ff8c00";
+        else if (solvedQuestions >= 4000 && solvedQuestions < 5000) return "#ff0000";
+        else if (solvedQuestions >= 5000) return "#ff0000";
+        else return "#000000";
+    }
+    async void ScoreboardFormSubmit()
+    {
+
+        user.DisplayName = Input.DisplayName;
+        user.AcademicYear = Input.AcademicYear;
+        user.Department = Input.Department;
+        user.Section = Input.Section;
+
+        await _context.SaveChangesAsync();
+        await this.OnInitializedAsync();
+    }
 
 }

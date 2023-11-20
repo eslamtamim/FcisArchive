@@ -1,5 +1,36 @@
 ﻿@inherits LayoutComponentBase
 
+<style>
+    @@media(max-width: 768px) {
+        .palestine-banner {
+            margin-top: 12%;
+            margin-bottom: -12%;
+        }
+    }
+
+
+    .palestine-banner{
+        padding: 4px;
+        background: #e4f4ed;
+        font-size: 13px;
+        color: #001433;
+        font-weight: 700;
+        letter-spacing: -.38px;
+        line-height: 24px;
+        text-align: center;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-align-items: center;
+        -ms-flex-align: center;
+        align-items: center;
+        -webkit-justify-content: center;
+        -ms-flex-pack: center;
+        justify-content: center;
+    }
+
+
+</style>
 <div class="pagetitle">
     <PageTitle>Fcis Archive</PageTitle>
 </div>
@@ -8,14 +39,18 @@
     <div class="sidebar">
         <NavMenu />
     </div>
-
+   
     <main>
-      
 
-        <article id="article"  class="content px-4">
+        <div class="palestine-banner">
+            <img  width="25" src="/flag-palestinian.png" alt="Palestine Flag" />
+            <span class="mx-2">  PRAY FOR PALESTINE  </span>
+            <img width="25"  src="/flag-palestinian.png" alt="Palestine Flag" />
+        </div>
+        <article id="article" class="content px-4">
             @Body
         </article>
-      
-   
+
+
     </main>
 </div>

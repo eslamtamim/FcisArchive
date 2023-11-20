@@ -1,5 +1,8 @@
 ﻿@inject ApplicationDbContext _dbcontext
 @inject IMemoryCache cache
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+
+
 
 @if (Years is null)
 {
@@ -11,16 +14,16 @@ else
 
     <div>
 
-        @*  <div class="d-flex  flex-wrap justify-content-start m-5">
+        <div class="d-flex  flex-wrap justify-content-start mx-5">
 
-    @foreach (var year in Years)
-    {
-    <button class="btn btn-outline-secondary fw-bold m-2 p-2" @onclick="()=>{GetSubjects(year);}">
-    @year.ToString()
-    </button>
-    }
+            @foreach (var year in Years)
+            {
+                <button class="btn btn-outline-secondary fw-bold m-2 p-2" @onclick="()=>{GetSubjects(year);}">
+                    @year.ToString()
+                </button>
+            }
 
-    </div> *@
+        </div>
 
         <div class="d-flex flex-wrap justify-content-start align-items-center m-5">
 
@@ -81,6 +84,9 @@ else
 
 }
 @code {
+
+
+
     bool _load = false;
 
     record SubjectDto(int Id, string Name);
@@ -96,19 +102,28 @@ else
 
     LectureDto _lecture;
 
+    AuthenticationState UserAuth { get; set; }
+    StudentUser User { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
+        UserAuth = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        if (UserAuth.User.Identity.Name is not null)
+        {
+            User = _dbcontext.Users.FirstOrDefault(x => x.UserName == UserAuth.User.Identity.Name);
+            if (User.AcademicYear is not null ) Year = User.AcademicYear;
+        }
 
         Years = cache.GetOrCreate("years", (entry) =>
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
             return _dbcontext.subjects.Select(x => x.Year).OrderBy(x => (int)x).Distinct().ToList();
         });
-        GetSubjects(FCISQuestionsHub.Core.Models.Year.Second);
+        GetSubjects(Year);
         await base.OnInitializedAsync();
     }
 
-    void GetSubjects(Year year)
+    void GetSubjects(Year? year)
     {
         _load = true;
         this.Year = year;

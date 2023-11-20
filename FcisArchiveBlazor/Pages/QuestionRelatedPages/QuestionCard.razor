@@ -47,7 +47,16 @@ else
                 @if (QuestionId == 0)
                 {
                     <h5 class=" card-title fw-bolder alertinfo d-inline ">
-                        @QuestionNumber@Question.Text[(Question.Text.IndexOf(')'))..]
+                        @QuestionNumber)
+                        @try
+                        {
+                            @Question.Text[(Question.Text.IndexOf(')')+1)..]
+
+                        }
+                        catch (Exception)
+                        {
+                            @Question.Text
+                        }
                     </h5>
                 }
                 else
@@ -222,7 +231,7 @@ else
                     else
                     {
                         <div>
-                            <a class="btn btn-outline-secondary" href="/s/@Question.Subject.Name]/@Question.Lecture.Name/">Back</a>
+                            <a class="btn btn-outline-secondary" href="/s/@Question.Subject.Name/@Question.Lecture.Name?page=1/">Back</a>
                         </div>
                     }
                 </div>
@@ -235,7 +244,15 @@ else
                 <span id="clipboardcopy" onclick="copyToClipboard(@Question.Id,'@Question.Subject.Name','@Question.Lecture.Name')" class="btn btn-outline-secondary small ">
                     <svg id="clipboardcopyicon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M8 5v0a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v0M8 5v0a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v0" /></svg>
                 </span>
-                <span id="copied-@Question.Id"> Question ID </span> : <span id="@Question.Id"> @Question.Id </span> | @(Question.QuestionType == 0 ? "MCQ" : "True & False") | Author : @Question.AuthorName
+                <span id="copied-@Question.Id"> Question ID </span> : <span id="@Question.Id"> @Question.Id </span> | @(Question.QuestionType == 0 ? "MCQ" : "True & False") | Author :
+                @if (@Question.AuthorName == "Amr Shoukry")
+                {
+                    <a href="https://www.linkedin.com/in/amrshoukry/">@Question.AuthorName</a>
+                }
+                else
+                {
+                    @Question.AuthorName
+                }
             </p>
         </div>
         @if (Errors.Any())

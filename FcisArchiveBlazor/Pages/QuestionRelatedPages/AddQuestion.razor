@@ -1,134 +1,243 @@
 ﻿@page "/AddQuestion"
+@using FcisArchiveBlazor.Pages.AdminRelatedPages
 @inject ApplicationDbContext _dbcontext
 @inject NavigationManager nav
 @inject IMemoryCache cache
-
+<style>
+    .QInFormat::placeholder {
+        white-space: pre; /* Preserves whitespace and line breaks */
+    }
+</style>
 
 <AuthorizeView Roles="Admin, Super-Admin">
 
     <Authorized>
 
-        <a class="mb-4 btn btn-outline-secondary" href="/">Home</a>
+        <a class="mb-4 btn btn-outline-secondary" href="/">Home</a> 
+        <button  class=" mb-4 btn btn-outline-primary" @onclick="() => { InsertByFormat = !InsertByFormat; }">
+            @if (!InsertByFormat) {<span> Insert by Format</span> }
+            else { <span> Insert Manually </span> }
+        </button>
+        @if (InsertByFormat)
+        {
+               <div class="card mb-3 Qcard">
 
-
-        <div class="card mb-3 Qcard">
-
-            <EditForm OnValidSubmit="SubmitAddedQuestion" Context="editContext" Model="Question">
-                <DataAnnotationsValidator/>
-                <div class="card-body">
-                    <div class="d-flex gap-4 mb-4 justify-content-between align-items-center">
-                        <InputTextArea placeholder="Question Text" @bind-Value="@Question.Text" class="card-title w-100 form-control-lg fw-bolder alertinfo d-inline"></InputTextArea>
-                        <br/>
-                        <ValidationMessage For="() => Question.Text"/>
-                    </div>
-                    <div class="d-flex justify-content-between mx">
-                        <div>
-
-                            <label>Change Question Photo</label>
-                            <InputFile OnChange="SavePhoto" class="form-control form-control m-3 mb-4"/>
-
+                <EditForm OnValidSubmit="SubmitAddedQuestionByFormat" Context="editContextFormat" Model="Question">
+                    <DataAnnotationsValidator/>
+                    <div class="card-body">
+                        <div class="d-flex gap-4 mb-4 justify-content-between align-items-center">
+                            <InputTextArea  placeholder="Insert The Full Question Body in this Format \n hmm" @bind-Value="@Question.Text" class="card-title QInFormat w-100 form-control-lg fw-bolder alertinfo d-inline"></InputTextArea>
+                            <br/>
+                            <ValidationMessage For="() => Question.Text"/>
+                        </div>
+                        <div class="d-flex justify-content-between mx">
                             <div>
-                                @if (Question.answers.Any())
+
+                                <label>Change Question Photo</label>
+                                <InputFile OnChange="SavePhoto" class="form-control form-control m-3 mb-4"/>
+
+                                <div>
+                                    <div class="m-4">
+                                        <InputText @bind-Value="@Question.Hint" placeholder="Add Hint If Not Included In The Question" class="form-control d-inline fw-bolder"></InputText>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+
+                                @if (Question.Photo is not null)
                                 {
-                                    @foreach (var ans in Question.answers)
+                                    <img src="@Question.Photo" width="400" title="QuestionPhoto" alt="QuestionPhoto"/>
+
+                                    <br/>
+
+                                    <br/>
+
+                                    <div @onclick="() => { Question.Photo = null; }" class="btn btn-danger">delete photo</div>
+                                }
+                                else
+                                {
+                                    <img class="d-block" src="QuestionsPhotos/404notfound.png" width="400" title="QuestionPhoto" alt="404NOTFoundPhoto"/>
+                                }
+                            </div>
+
+                        </div>
+                        <div class="m-4">
+
+                            <lable class="fw-bold m-2"> Set The Subject of The Question </lable>
+                            <select value="@Question.SubjectId" @onchange="GetLectures" class="form-control w-25 fw-bold">
+                                @foreach (var sub in Subjects)
+                                {
+                                    <option value="@sub.Id"> @sub.Name </option>
+                                }
+                            </select>
+                            <ValidationMessage For="() => Question.SubjectId"/>
+
+                        </div>
+
+                        <div class="m-4">
+
+                            <lable class="fw-bold m-2"> Set The Lecture of The Subject </lable>
+                            <InputSelect @bind-Value="@Question.LectureId" class="form-control w-25 fw-bold">
+                                @if (Lectures is not null)
+                                {
+                                    @foreach (var lec in Lectures)
                                     {
-                                        <div class="d-flex justify-content-around align-items-center">
-                                            <div class="card mx-4 my-3">
-                                                <div class="card-body">
-                                                    <InputText @bind-Value="@ans.Text" placeholder="Answer Text" class="form-control fw-bold"></InputText>
-                                                    <ValidationMessage For="() => ans.Text"/>
-
-                                                </div>
-                                            </div>
-                                            @if (ans.IsCorrect)
-                                            {
-                                                <input type="radio" class="form-check-input" name="ansCorrecties" checked value="@ans.IsCorrect"
-                                                       @onclick="() => { MakeAnswerCorrect(ans); }"/>
-                                            }
-                                            else
-                                            {
-                                                <input type="radio" class="form-check-input" name="ansCorrecties" value="@ans.IsCorrect"
-                                                       @onclick="() => { MakeAnswerCorrectIfNotCorrect(ans); }"/>
-                                            }
-                                            <ValidationMessage For="() => ans.IsCorrect"/>
-
-                                            <div class="m-4 btn btn-danger" @onclick="() => Question.answers.Remove(ans)">x</div>
-                                        </div>
+                                        <option value="@lec.Id"> @lec.Name </option>
                                     }
                                 }
-                                <button class="btn btn-outline-secondary m-4 px-xxl-4"
-                                        @onclick="() =>{ Question.answers.Add(new Answer()); StateHasChanged(); }">
-                                    + Create Answer
-                                </button>
+                                else
+                                {
+                                    <option value="0"></option>
+                                    <option value="0"> Select Subject First </option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="() => Question.LectureId"/>
+
+                        </div>
+
+                    </div>
+                    <button class="btn btn-secondary mx-5 my-3">Add Question</button>
+                    @if (SavedChanges.Any())
+                    {
+                        <ul>
+                            <li class="m-1 d-inline-block alert-success">@SavedChanges.Last()</li>
+                        </ul>
+                    }
+                </EditForm>
+
+            </div>
+      
+            
+            
+        }
+        else
+        {
+            <div class="card mb-3 Qcard">
+
+                <EditForm OnValidSubmit="SubmitAddedQuestion" Context="editContext" Model="Question">
+                    <DataAnnotationsValidator/>
+                    <div class="card-body">
+                        <div class="d-flex gap-4 mb-4 justify-content-between align-items-center">
+                            <InputTextArea placeholder="Question Text" @bind-Value="@Question.Text" class="card-title w-100 form-control-lg fw-bolder alertinfo d-inline"></InputTextArea>
+                            <br/>
+                            <ValidationMessage For="() => Question.Text"/>
+                        </div>
+                        <div class="d-flex justify-content-between mx">
+                            <div>
+
+                                <label>Change Question Photo</label>
+                                <InputFile OnChange="SavePhoto" class="form-control form-control m-3 mb-4"/>
+
+                                <div>
+                                    @if (Question.answers.Any())
+                                    {
+                                        @foreach (var ans in Question.answers)
+                                        {
+                                            <div class="d-flex justify-content-around align-items-center">
+                                                <div class="card mx-4 my-3">
+                                                    <div class="card-body">
+                                                        <InputText @bind-Value="@ans.Text" placeholder="Answer Text" class="form-control fw-bold"></InputText>
+                                                        <ValidationMessage For="() => ans.Text"/>
+
+                                                    </div>
+                                                </div>
+                                                @if (ans.IsCorrect)
+                                                {
+                                                    <input type="radio" class="form-check-input" name="ansCorrecties" checked value="@ans.IsCorrect"
+                                                           @onclick="() => { MakeAnswerCorrect(ans); }"/>
+                                                }
+                                                else
+                                                {
+                                                    <input type="radio" class="form-check-input" name="ansCorrecties" value="@ans.IsCorrect"
+                                                           @onclick="() => { MakeAnswerCorrectIfNotCorrect(ans); }"/>
+                                                }
+                                                <ValidationMessage For="() => ans.IsCorrect"/>
+
+                                                <div class="m-4 btn btn-danger" @onclick="() => Question.answers.Remove(ans)">x</div>
+                                            </div>
+                                        }
+                                    }
+                                    <button class="btn btn-outline-secondary m-4 px-xxl-4"
+                                            @onclick="() =>{ Question.answers.Add(new Answer()); StateHasChanged(); }">
+                                        + Create Answer
+                                    </button>
 
 
-                                <div class="m-4">
-                                    <InputText @bind-Value="@Question.Hint" placeholder="Add Hint" class="form-control d-inline fw-bolder"></InputText>
+                                    <div class="m-4">
+                                        <InputText @bind-Value="@Question.Hint" placeholder="Add Hint" class="form-control d-inline fw-bolder"></InputText>
+
+                                    </div>
 
                                 </div>
 
+
+                            </div>
+                            <div>
+
+                                @if (Question.Photo is not null)
+                                {
+                                    <img src="@Question.Photo" width="400" title="QuestionPhoto" alt="QuestionPhoto"/>
+
+                                    <br/>
+
+                                    <br/>
+
+                                    <div @onclick="() => { Question.Photo = null; }" class="btn btn-danger">delete photo</div>
+                                }
+                                else
+                                {
+                                    <img class="d-block" src="QuestionsPhotos/404notfound.png" width="400" title="QuestionPhoto" alt="404NOTFoundPhoto"/>
+                                }
                             </div>
 
-
                         </div>
-                        <div>
+                        <div class="m-4">
 
-                            @if (Question.Photo is not null)
-                            {
-                                <img src="@Question.Photo" width="400" title="QuestionPhoto" alt="QuestionPhoto"/>
-
-                                <br/>
-
-                                <br/>
-
-                                <div @onclick="() => { Question.Photo = null; }" class="btn btn-danger">delete photo</div>
-                            }
-                            else
-                            {
-                                <img class="d-block" src="QuestionsPhotos/404notfound.png" width="400" title="QuestionPhoto" alt="404NOTFoundPhoto"/>
-                            }
-                        </div>
-
-                    </div>
-                    <div class="m-4">
-
-                        <lable class="fw-bold m-2"> Set The Subject of The Question </lable>
-                        <select value="@Question.SubjectId" @onchange="GetLectures" class="form-control w-25 fw-bold">
-                            @foreach (var sub in Subjects)
-                            {
-                                <option value="@sub.Id"> @sub.Name </option>
-                            }
-                        </select>
-                        <ValidationMessage For="() => Question.SubjectId"/>
-
-                    </div>
-
-                    <div class="m-4">
-
-                        <lable class="fw-bold m-2"> Set The Lecture of The Subject </lable>
-                        <InputSelect @bind-Value="@Question.LectureId" class="form-control w-25 fw-bold">
-                            @if (Lectures is not null)
-                            {
-                                @foreach (var lec in Lectures)
+                            <lable class="fw-bold m-2"> Set The Subject of The Question </lable>
+                            <select value="@Question.SubjectId" @onchange="GetLectures" class="form-control w-25 fw-bold">
+                                @foreach (var sub in Subjects)
                                 {
-                                    <option value="@lec.Id"> @lec.Name </option>
+                                    <option value="@sub.Id"> @sub.Name </option>
                                 }
-                            }
-                            else
-                            {
-                                <option value="0"></option>
-                                <option value="0"> Select Subject First </option>
-                            }
-                        </InputSelect>
-                        <ValidationMessage For="() => Question.LectureId"/>
+                            </select>
+                            <ValidationMessage For="() => Question.SubjectId"/>
+
+                        </div>
+
+                        <div class="m-4">
+
+                            <lable class="fw-bold m-2"> Set The Lecture of The Subject </lable>
+                            <InputSelect @bind-Value="@Question.LectureId" class="form-control w-25 fw-bold">
+                                @if (Lectures is not null)
+                                {
+                                    @foreach (var lec in Lectures)
+                                    {
+                                        <option value="@lec.Id"> @lec.Name </option>
+                                    }
+                                }
+                                else
+                                {
+                                    <option value="0"></option>
+                                    <option value="0"> Select Subject First </option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="() => Question.LectureId"/>
+
+                        </div>
 
                     </div>
+                    <button class="btn btn-secondary mx-5 my-3">Add Question</button>
+                    @if (SavedChanges.Any())
+                    {
+                        <ul>
+                            <li class="m-1 d-inline-block alert-success">@SavedChanges.Last()</li>
+                        </ul>
+                    }
+                </EditForm>
 
-                </div>
-                <button class="btn btn-secondary mx-5 my-3">Add Question</button>
-            </EditForm>
+            </div>
+        }
 
-        </div>
     </Authorized>
 
     <NotAuthorized>
@@ -141,11 +250,13 @@
 
 @code {
 
-    record SubjectDTO(int Id, string Name);
+    record SubjectDTO(int Id, string Name, Year? Year);
 
     record LectureDTO(int Id, string Name);
 
-
+    Upload _uploadQuestion = new();
+    public bool InsertByFormat = false;
+    Queue<string> SavedChanges { get; set; } = new();
     public Question Question { get; set; } = new();
     List<SubjectDTO> Subjects { get; set; } = new();
     List<LectureDTO> Lectures { get; set; }
@@ -166,10 +277,11 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Subjects = _dbcontext.subjects.Select(q => new SubjectDTO(q.Id, q.Name)).Distinct().ToList();
-        Subjects.Insert(0, new SubjectDTO(0, ""));
+        Subjects = _dbcontext.subjects.Select(q => new SubjectDTO(q.Id, q.Name, q.Year)).Distinct().ToList();
+        Subjects.Insert(0, new SubjectDTO(0, "", null));
         await base.OnInitializedAsync();
     }
+
 
     async void SubmitAddedQuestion()
     {
@@ -180,7 +292,7 @@
             SubjectDto = Subjects.FirstOrDefault(s => s.Id == Question.SubjectId);
             LectureDto = Lectures.FirstOrDefault(l => l.Id == Question.LectureId);
             if (LectureDto is null) return;
-            
+
     // clearing the cache for the pagination
             var questionCount = await _dbcontext.questions.Where(q => q.LectureId == Question.LectureId).LongCountAsync();
             var pages = (decimal)questionCount / 20;
@@ -189,8 +301,8 @@
             {
                 cache.Remove($"p{page}" + LectureDto.Name);
             }
-            
-            
+
+
             cache.Remove("questionCount" + LectureDto.Name);
             ClearIndexCache();
             if (Question.Photo is not null)
@@ -200,8 +312,25 @@
                 File.Move(filePath, "wwwroot\\" + Question.Photo);
                 await _dbcontext.SaveChangesAsync();
             }
-            if (SubjectDto is not null) nav.NavigateTo(nav.BaseUri + $"s/{SubjectDto.Name}/{LectureDto.Name}#{Question.Id}", false, true);
-            else nav.NavigateTo(nav.BaseUri);
+            this.Question = new Question();
+            Question.answers = new List<Answer>
+            {
+                new Answer(),
+                new Answer()
+            };
+            this.StateHasChanged();
+            await Task.Run(async () =>
+            {
+                SavedChanges.Enqueue("Question Added Successfully");
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(TimeSpan.FromSeconds(4));
+                SavedChanges.Dequeue();
+                await InvokeAsync(StateHasChanged);
+            });
+
+
+    // if (SubjectDto is not null) nav.NavigateTo(nav.BaseUri + $"s/{SubjectDto.Name}/{LectureDto.Name}#{Question.Id}", false, true);
+    // else nav.NavigateTo(nav.BaseUri);
         }
         catch (Exception)
         {
@@ -210,6 +339,11 @@
     }
 
 
+    async void SubmitAddedQuestionByFormat()
+    {
+        
+        
+    }
     void GetLectures(ChangeEventArgs e)
     {
         if (e.Value != null) Question.SubjectId = int.Parse(e.Value.ToString() ?? string.Empty);
@@ -220,7 +354,7 @@
 
     async void SavePhoto(InputFileChangeEventArgs input)
     {
-        IBrowserFile file = input.File;
+        var file = input.File;
         const long maxFileSize = 1024 * 1024 * 5;
 
         if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "QuestionsPhotos")))
@@ -251,8 +385,8 @@
     void ClearIndexCache()
     {
         cache.Remove("years");
-        cache.Remove("subjects" + Question.Subject.Year);
-        cache.Remove("lectures" + Question.Subject.Name);
+        if (SubjectDto.Year != null) cache.Remove("subjects" + (int)SubjectDto.Year);
+        cache.Remove("lectures" + SubjectDto.Name);
     }
 
 }

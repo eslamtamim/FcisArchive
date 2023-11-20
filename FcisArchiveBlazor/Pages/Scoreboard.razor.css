@@ -1,4 +1,21 @@
-﻿th, td {
+﻿@media(max-width : 768px) {
+    .ScoreContent {
+        display: block;
+    }
+    .Scoreform {
+        margin-top: 20px;
+    }
+}
+@media(min-width : 768px) {
+    .ScoreContent {
+        display: flex;
+        justify-content : space-between;
+        
+    }
+}
+
+
+th, td {
     border: 1px solid black;
     padding: 5px;
 }
