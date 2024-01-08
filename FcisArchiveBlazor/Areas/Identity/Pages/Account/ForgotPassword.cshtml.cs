@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using FcisArchiveBlazor.Services;
+using FCISQuestionsHub.Core.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -19,13 +20,20 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
 {
     public class ForgotPasswordModel : PageModel
     {
+
+        private readonly ILogger<ExternalLoginModel> _logger;
+
+        private readonly SignInManager<FCISQuestionsHub.Core.Models.StudentUser> _signInManager;
+
         private readonly UserManager<FCISQuestionsHub.Core.Models.StudentUser> _userManager;
         private readonly IMaillingService _emailSender;
 
-        public ForgotPasswordModel(UserManager<FCISQuestionsHub.Core.Models.StudentUser> userManager, IMaillingService emailSender)
+        public ForgotPasswordModel(UserManager<StudentUser> userManager,IMaillingService emailSender,ILogger<ExternalLoginModel> logger, SignInManager<StudentUser> signInManager)
         {
+            _logger = logger;
             _userManager = userManager;
             _emailSender = emailSender;
+            _signInManager = signInManager;
         }
 
         /// <summary>
@@ -56,7 +64,7 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
             {
                 var user = await _userManager.FindByEmailAsync(Input.Email);
                 var isEmailConfirmed = await _userManager.IsEmailConfirmedAsync(user);
-                if (user == null  || !isEmailConfirmed )
+                if (user == null || !isEmailConfirmed)
                 {
                     // Don't reveal that the user does not exist or is not confirmed
                     return RedirectToPage("./ForgotPasswordConfirmation");
@@ -72,10 +80,19 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
                     values: new { area = "Identity", code },
                     protocol: Request.Scheme);
 
-                await _emailSender.SendEmailAsync(
-                    Input.Email,
-                    "Reset Password",
-                    $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                var info = await _signInManager.GetExternalLoginInfoAsync();
+
+                try
+                {
+                    await _emailSender.SendEmailAsync(
+                Input.Email,
+                "Reset Password",
+                $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(message: e.Message, info?.LoginProvider);
+                }
 
                 return RedirectToPage("./ForgotPasswordConfirmation");
             }

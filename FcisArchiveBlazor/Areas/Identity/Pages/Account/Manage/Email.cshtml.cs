@@ -18,6 +18,8 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account.Manage
 {
     public class EmailModel : PageModel
     {
+        private readonly ExternalLoginInfo info;
+        private readonly ILogger<ExternalLoginModel> _logger;
         private readonly UserManager<FCISQuestionsHub.Core.Models.StudentUser> _userManager;
         private readonly SignInManager<FCISQuestionsHub.Core.Models.StudentUser> _signInManager;
         private readonly IMaillingService _emailSender;
@@ -25,11 +27,15 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account.Manage
         public EmailModel(
             UserManager<FCISQuestionsHub.Core.Models.StudentUser> userManager,
             SignInManager<FCISQuestionsHub.Core.Models.StudentUser> signInManager,
-            IMaillingService emailSender)
+            IMaillingService emailSender,
+            ILogger<ExternalLoginModel> logger
+         )
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailSender = emailSender;
+            _logger = logger;
+            this.info = _signInManager.GetExternalLoginInfoAsync().Result;
         }
 
         /// <summary>
@@ -84,6 +90,7 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account.Manage
                 NewEmail = email,
             };
 
+
             IsEmailConfirmed = await _userManager.IsEmailConfirmedAsync(user);
         }
 
@@ -112,7 +119,6 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account.Manage
                 await LoadAsync(user);
                 return Page();
             }
-
             var email = await _userManager.GetEmailAsync(user);
             if (Input.NewEmail != email)
             {
@@ -124,11 +130,21 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account.Manage
                     pageHandler: null,
                     values: new { area = "Identity", userId = userId, email = Input.NewEmail, code = code },
                     protocol: Request.Scheme);
-                await _emailSender.SendEmailAsync(
-                    Input.NewEmail,
-                    "Confirm your email",
-                    $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                try
+                {
 
+                    await _emailSender.SendEmailAsync(Input.NewEmail, "Confirm your email",
+                        $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+
+                }
+                catch (Exception e)
+                {
+
+                    StatusMessage = "Verification email didn't sent :( Please try again or contact admin.";
+                    _logger.LogError(message: e.Message, info?.LoginProvider);
+                    return RedirectToPage();
+
+                }
                 StatusMessage = $"Confirmation link to change email sent to {Input.NewEmail}. Please check your email.";
                 return RedirectToPage();
             }
@@ -160,12 +176,20 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account.Manage
                 pageHandler: null,
                 values: new { area = "Identity", userId = userId, code = code },
                 protocol: Request.Scheme);
-            await _emailSender.SendEmailAsync(
-                email,
-                "Confirm your email",
-                $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+            try
+            {
 
-            StatusMessage = "Verification email sent. Please check your email.";
+                await _emailSender.SendEmailAsync(email, "Confirm your email",
+                    $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                StatusMessage = "Verification email sent. Please check your email.";
+
+
+            }
+            catch (Exception e)
+            {
+                StatusMessage = "Verification email didn't sent :( Please try again or contact admin.";
+                _logger.LogError(message: e.Message, info?.LoginProvider);
+            }
             return RedirectToPage();
         }
     }

@@ -102,7 +102,7 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
 
             [Required]
             [DataType(DataType.Text)]
-            [Display(Name ="Fisrt Name")]
+            [Display(Name = "Fisrt Name")]
             public string FirstName { get; set; }
 
             [Required]
@@ -127,7 +127,7 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
             {
                 var user = CreateUser();
 
-                await _userStore.SetUserNameAsync(user, Input.Email.Substring(0,Input.Email.IndexOf('@')), CancellationToken.None);
+                await _userStore.SetUserNameAsync(user, Input.Email.Substring(0, Input.Email.IndexOf('@')), CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
                 user.FirstName = Input.FirstName;
                 user.LastName = Input.LastName;
@@ -135,7 +135,7 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
 
                 if (result.Succeeded)
                 {
-                  
+
                     await _userStore.UpdateAsync(user, CancellationToken.None);
 
                     _logger.LogInformation("User created a new account with password.");
@@ -149,8 +149,19 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
                         values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
                         protocol: Request.Scheme);
 
-                    await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                        $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                    var info = await _signInManager.GetExternalLoginInfoAsync();
+                    try
+                    {
+
+                        await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
+                            $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError(message: e.Message, info?.LoginProvider);
+                    }
+
 
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)
                     {

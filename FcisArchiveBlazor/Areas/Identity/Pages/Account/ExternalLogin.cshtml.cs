@@ -24,17 +24,17 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
     [AllowAnonymous]
     public class ExternalLoginModel : PageModel
     {
-        private readonly SignInManager<FCISQuestionsHub.Core.Models.StudentUser> _signInManager;
-        private readonly UserManager<FCISQuestionsHub.Core.Models.StudentUser> _userManager;
-        private readonly IUserStore<FCISQuestionsHub.Core.Models.StudentUser> _userStore;
-        private readonly IUserEmailStore<FCISQuestionsHub.Core.Models.StudentUser> _emailStore;
+        private readonly SignInManager<StudentUser> _signInManager;
+        private readonly UserManager<StudentUser> _userManager;
+        private readonly IUserStore<StudentUser> _userStore;
+        private readonly IUserEmailStore<StudentUser> _emailStore;
         private readonly IEmailSender _emailSender;
         private readonly ILogger<ExternalLoginModel> _logger;
 
         public ExternalLoginModel(
-            SignInManager<FCISQuestionsHub.Core.Models.StudentUser> signInManager,
-            UserManager<FCISQuestionsHub.Core.Models.StudentUser> userManager,
-            IUserStore<FCISQuestionsHub.Core.Models.StudentUser> userStore,
+            SignInManager<StudentUser> signInManager,
+            UserManager<StudentUser> userManager,
+            IUserStore<StudentUser> userStore,
             ILogger<ExternalLoginModel> logger,
             IEmailSender emailSender)
         {
@@ -86,7 +86,7 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
             [EmailAddress]
             public string Email { get; set; }
         }
-        
+
         public IActionResult OnGet() => RedirectToPage("./Login");
 
         public IActionResult OnPost(string provider, string returnUrl = null)
@@ -173,9 +173,15 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
                             pageHandler: null,
                             values: new { area = "Identity", userId = userId, code = code },
                             protocol: Request.Scheme);
-
-                        await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                            $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                        try
+                        {
+                            await _emailSender.SendEmailAsync(Input.Email, "Confirm your email", $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                        }
+                        catch (Exception e)
+                        {
+                            ModelState.AddModelError(string.Empty, e.Message);
+                            _logger.LogError(message: e.Message, info?.LoginProvider);
+                        }
 
                         // If account confirmation is required, we need to show the link if we don't have a real email sender
                         if (_userManager.Options.SignIn.RequireConfirmedAccount)
@@ -198,27 +204,27 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
             return Page();
         }
 
-        private FCISQuestionsHub.Core.Models.StudentUser CreateUser()
+        private StudentUser CreateUser()
         {
             try
             {
-                return Activator.CreateInstance<FCISQuestionsHub.Core.Models.StudentUser>();
+                return Activator.CreateInstance<StudentUser>();
             }
             catch
             {
-                throw new InvalidOperationException($"Can't create an instance of '{nameof(FCISQuestionsHub.Core.Models.StudentUser)}'. " +
-                    $"Ensure that '{nameof(FCISQuestionsHub.Core.Models.StudentUser)}' is not an abstract class and has a parameterless constructor, or alternatively " +
+                throw new InvalidOperationException($"Can't create an instance of '{nameof(StudentUser)}'. " +
+                    $"Ensure that '{nameof(StudentUser)}' is not an abstract class and has a parameterless constructor, or alternatively " +
                     $"override the external login page in /Areas/Identity/Pages/Account/ExternalLogin.cshtml");
             }
         }
 
-        private IUserEmailStore<FCISQuestionsHub.Core.Models.StudentUser> GetEmailStore()
+        private IUserEmailStore<StudentUser> GetEmailStore()
         {
             if (!_userManager.SupportsUserEmail)
             {
                 throw new NotSupportedException("The default UI requires a user store with email support.");
             }
-            return (IUserEmailStore<FCISQuestionsHub.Core.Models.StudentUser>)_userStore;
+            return (IUserEmailStore<StudentUser>)_userStore;
         }
     }
 }
