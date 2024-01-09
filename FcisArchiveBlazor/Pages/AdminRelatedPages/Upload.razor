@@ -392,20 +392,29 @@
         int indexOfTheStartOfTheFileName = (filePath.LastIndexOf('\\') + 1);
         var subjectFileName = filePath[indexOfTheStartOfTheFileName..];
         subjectFileName = subjectFileName[..(subjectFileName.LastIndexOf('-'))];
-        if (!subjectFileName.ToLower().Contains("all"))
+        try
         {
-            if (subjectFileName.ToLower().Contains("lec"))
-            {
-                string fileNumber = subjectFileName.Split('-')[1][3..];
-                subjectFileName = $"{subjectFileName.Split('-')[0]}-{subjectFileName.Split('-')[1][..3]}-{fileNumber}";
 
-            }
-            else
+            if (!subjectFileName.ToLower().Contains("all"))
             {
-                subjectFileName = $"{subjectFileName.Split('-')[0]}-{subjectFileName.Split('-')[1]}";
+                if (subjectFileName.ToLower().Contains("lec"))
+                {
+                    string fileNumber = subjectFileName.Split('-')[1][3..];
+                    subjectFileName = $"{subjectFileName.Split('-')[0]}-{subjectFileName.Split('-')[1][..3]}-{fileNumber}";
+
+                }
+                else
+                {
+                    subjectFileName = $"{subjectFileName.Split('-')[0]}-{subjectFileName.Split('-')[1]}";
+                }
             }
         }
-        return subjectFileName;
+        catch (Exception)
+        {
+            
+        }
+
+    return subjectFileName;
     }
 
     bool AddingQuestion(List<string> regexResult, ref Question question, int fileUploadSaving, int fileUploadId)

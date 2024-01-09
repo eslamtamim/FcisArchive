@@ -28,6 +28,8 @@ public class StudentUser : IdentityUser
     public Department ?Department { get; set; }
     public int ? Section { get; set; }
 
+    public DateTime? JoinDate { get; set; } = DateTime.UtcNow;
+
     public virtual List<Question> questions { get; set; }
     public virtual List<StudentQuestionAnswer> studentQuestions { get; set; }
 

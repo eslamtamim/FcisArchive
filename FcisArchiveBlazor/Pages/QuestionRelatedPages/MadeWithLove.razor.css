@@ -1,4 +1,6 @@
 ﻿#about {
+    position:relative;
+    z-index:5;
     display: none;
 }
 

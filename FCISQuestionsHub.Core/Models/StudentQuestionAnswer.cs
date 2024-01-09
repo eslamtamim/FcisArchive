@@ -23,5 +23,8 @@ namespace FCISQuestionsHub.Core.Models
         public virtual Question question { get; set; }
         public virtual Answer answer { get; set; }
 
+        public DateTime? SubmittedOn { get; set; } = DateTime.UtcNow;
+
+
     }
 }

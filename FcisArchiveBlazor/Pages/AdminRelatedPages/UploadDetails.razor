@@ -75,14 +75,20 @@ else
 
         foreach (var lectureName in lecsNames)
         {
-            var lec = _dbcontext.lectures.FirstOrDefault(q => q.Name == lectureName);
-            if (lec == null) continue;
-            _dbcontext.lectures.Remove(lec);
+            try
+            {
+                var lec = _dbcontext.lectures.FirstOrDefault(q => q.Name == lectureName);
+                if (lec == null) continue;
+                _dbcontext.lectures.Remove(lec);
+                var lecture = _dbcontext.lectures.FirstOrDefault(l => l.Name == lectureName);
+                var subject = _dbcontext.subjects.FirstOrDefault(s => s.Id == lecture.SubjectId);
+                // clearing the cache
+                await ClearCache(subject, lecture);
+            }
+            catch (Exception)
+            {
 
-            var lecture = _dbcontext.lectures.FirstOrDefault(l => l.Name == lectureName);
-            var subject = _dbcontext.subjects.FirstOrDefault(s => s.Id == lecture.SubjectId);
-            // clearing the cache
-            await ClearCache(subject, lecture);
+            }
         }
         _dbcontext.PdfUploads.Remove(pdfUploads);
         await _dbcontext.SaveChangesAsync();
@@ -97,36 +103,54 @@ else
         if (lec != null)
         {
             _dbcontext.lectures.Remove(lec);
-            pdfUploads.Files.Remove(file);
         }
+        pdfUploads.Files.Remove(file);
 
-        var lecture = _dbcontext.lectures.FirstOrDefault(l => l.Name == lectureName);
-        var subject = _dbcontext.subjects.FirstOrDefault(s => s.Id == lecture.SubjectId);
-        // clearing the cache
-        await ClearCache(subject, lecture);
+        try
+        {
 
-        await _dbcontext.SaveChangesAsync();
+            var lecture = _dbcontext.lectures.FirstOrDefault(l => l.Name == lectureName);
+            var subject = _dbcontext.subjects.FirstOrDefault(s => s.Id == lecture.SubjectId);
+            // clearing the cache
+            await ClearCache(subject, lecture);
+
+            await _dbcontext.SaveChangesAsync();
+        }
+        catch (Exception)
+        {
+
+        }
         StateHasChanged();
     }
 
     static string GetNormalizedFileName(string filePath)
     {
-
-        int indexOfTheStartOfTheFileName = (filePath.LastIndexOf('\\') + 1);
-        var subjectFileName = filePath[indexOfTheStartOfTheFileName..];
-        subjectFileName = subjectFileName[..(subjectFileName.LastIndexOf('-'))];
-        if (!subjectFileName.ToLower().Contains("all"))
+        string subjectFileName = "";
+        try
         {
-            if (subjectFileName.ToLower().Contains("lec"))
-            {
-                string fileNumber = subjectFileName.Split('-')[1][3..];
-                subjectFileName = $"{subjectFileName.Split('-')[0]}-{subjectFileName.Split('-')[1][..3]}-{fileNumber}";
 
-            }
-            else
+            int indexOfTheStartOfTheFileName = (filePath.LastIndexOf('\\') + 1);
+            subjectFileName = filePath[indexOfTheStartOfTheFileName..];
+            subjectFileName = subjectFileName[..(subjectFileName.LastIndexOf('-'))];
+
+
+            if (!subjectFileName.ToLower().Contains("all"))
             {
-                subjectFileName = $"{subjectFileName.Split('-')[0]}-{subjectFileName.Split('-')[1]}";
+                if (subjectFileName.ToLower().Contains("lec"))
+                {
+                    string fileNumber = subjectFileName.Split('-')[1][3..];
+                    subjectFileName = $"{subjectFileName.Split('-')[0]}-{subjectFileName.Split('-')[1][..3]}-{fileNumber}";
+
+                }
+                else
+                {
+                    subjectFileName = $"{subjectFileName.Split('-')[0]}-{subjectFileName.Split('-')[1]}";
+                }
             }
+        }
+        catch (Exception)
+        {
+
         }
         return subjectFileName;
 
