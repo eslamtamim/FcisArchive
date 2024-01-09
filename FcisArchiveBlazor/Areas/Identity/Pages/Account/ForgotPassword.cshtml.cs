@@ -59,11 +59,16 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
             if (ModelState.IsValid)
             {
                 var user = await _userManager.FindByEmailAsync(Input.Email);
-                var isEmailConfirmed = await _userManager.IsEmailConfirmedAsync(user);
-                if (user == null || !isEmailConfirmed)
+                if (user is null)
                 {
-                    // Don't reveal that the user does not exist or is not confirmed
-                    return RedirectToPage("./ForgotPasswordConfirmation");
+                    ModelState.AddModelError(string.Empty, "Please confirm your Email first.");
+                    return Page();
+                }
+                var isEmailConfirmed = await _userManager.IsEmailConfirmedAsync(user);
+                if (!isEmailConfirmed)
+                {
+                    ModelState.AddModelError(string.Empty, "Please confirm your Email first.");
+                    return Page();
                 }
 
                 // For more information on how to enable account confirmation and password reset please
