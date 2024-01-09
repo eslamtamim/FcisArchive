@@ -21,19 +21,15 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
     public class ForgotPasswordModel : PageModel
     {
 
-        private readonly ILogger<ExternalLoginModel> _logger;
-
-        private readonly SignInManager<FCISQuestionsHub.Core.Models.StudentUser> _signInManager;
-
-        private readonly UserManager<FCISQuestionsHub.Core.Models.StudentUser> _userManager;
+        private readonly ILogger<ForgotPasswordModel> _logger;
+        private readonly UserManager<StudentUser> _userManager;
         private readonly IMaillingService _emailSender;
 
-        public ForgotPasswordModel(UserManager<StudentUser> userManager,IMaillingService emailSender,ILogger<ExternalLoginModel> logger, SignInManager<StudentUser> signInManager)
+        public ForgotPasswordModel(UserManager<StudentUser> userManager, IMaillingService emailSender, ILogger<ForgotPasswordModel> logger)
         {
             _logger = logger;
             _userManager = userManager;
             _emailSender = emailSender;
-            _signInManager = signInManager;
         }
 
         /// <summary>
@@ -80,19 +76,9 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
                     values: new { area = "Identity", code },
                     protocol: Request.Scheme);
 
-                var info = await _signInManager.GetExternalLoginInfoAsync();
+                var sentResult = await _emailSender.SendEmailAsync(Input.Email, "Reset Password", $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
-                try
-                {
-                    await _emailSender.SendEmailAsync(
-                Input.Email,
-                "Reset Password",
-                $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(message: e.Message, info?.LoginProvider);
-                }
+                if (sentResult) ModelState.AddModelError(string.Empty, "Email didn't sent, please try again or contact us on telegram @mimatmalxe.");
 
                 return RedirectToPage("./ForgotPasswordConfirmation");
             }

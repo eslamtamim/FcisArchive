@@ -5,6 +5,8 @@
     ViewData["Title"] = "Login";
 }
 
+
+
 <div class="row d-flex justify-content-center mt-lg-5">
 
     <div class="col-lg-6">
@@ -19,7 +21,8 @@
 
                     <label asp-for="Input.Email" class="input-group-text rounded-3" id="basic-addon1">@@</label>
                     <input asp-for="Input.Email" type="text" autocomplete="username" aria-required="true"
-                           class="form-control rounded-3" placeholder="Username or E-mail" aria-label="Username" aria-describedby="basic-addon1">
+                        class="form-control rounded-3" placeholder="Username or E-mail" aria-label="Username"
+                        aria-describedby="basic-addon1">
                 </div>
                 <span asp-validation-for="Input.Email" class="text-danger"></span>
 
@@ -32,7 +35,8 @@
                     <label asp-for="Input.Password" class="input-group-text rounded-3" id="basic-addon2">
                         <iconify-icon icon="oi:lock-locked"></iconify-icon>
                     </label>
-                    <input asp-for="Input.Password" class="form-control rounded-3" autocomplete="current-password" aria-required="true" placeholder="password" />
+                    <input asp-for="Input.Password" class="form-control rounded-3" autocomplete="current-password"
+                        aria-required="true" placeholder="password" />
                 </div>
                 <span asp-validation-for="Input.Password" class="text-danger"></span>
 
@@ -48,7 +52,7 @@
                 <p>
                     <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Resend email confirmation</a>
                 </p>
-             
+
             </div>
         </form>
     </div>
@@ -61,19 +65,22 @@
     {
     <div>
     <p>
-    There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article
+    There are no external authentication services configured. See this <a
+    href="https://go.microsoft.com/fwlink/?LinkID=532715">article
     about setting up this ASP.NET application to support logging in via external services</a>.
     </p>
     </div>
     }
     else
     {
-    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
+    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post"
+    class="form-horizontal">
     <div>
     <p>
     @foreach (var provider in Model.ExternalLogins!)
     {
-    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
+    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your
+    @provider.DisplayName account">@provider.DisplayName</button>
     }
     </p>
     </div>

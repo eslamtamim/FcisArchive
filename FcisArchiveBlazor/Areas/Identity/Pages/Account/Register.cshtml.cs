@@ -150,17 +150,10 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
                         protocol: Request.Scheme);
 
                     var info = await _signInManager.GetExternalLoginInfoAsync();
-                    try
-                    {
 
-                        await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                            $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
-                    }
-                    catch (Exception e)
-                    {
-                        _logger.LogError(message: e.Message, info?.LoginProvider);
-                    }
+                    var sentResult = await _emailSender.SendEmailAsync(Input.Email, "Confirm your email", $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                    ModelState.AddModelError(string.Empty, "Email didn't sent, please try again or contact us on telegram @mimatmalxe.");
 
 
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)

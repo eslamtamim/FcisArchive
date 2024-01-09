@@ -1,10 +1,12 @@
-﻿namespace FcisArchiveBlazor.Services
+﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace FcisArchiveBlazor.Services
 {
-    public interface IMaillingService
+    public interface IMaillingService 
     {
 
 
-        Task SendEmailAsync(string toEmail, string subject, string body, List<IFormFile> attachments = null);
+        Task<bool> SendEmailAsync(string toEmail, string subject, string body, List<IFormFile> attachments = null);
 
     }
 }

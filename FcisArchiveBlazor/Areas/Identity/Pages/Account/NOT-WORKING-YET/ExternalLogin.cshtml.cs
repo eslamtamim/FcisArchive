@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using FCISQuestionsHub.Core.Models;
+using FcisArchiveBlazor.Services;
 
 namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
 {
@@ -28,7 +29,7 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
         private readonly UserManager<StudentUser> _userManager;
         private readonly IUserStore<StudentUser> _userStore;
         private readonly IUserEmailStore<StudentUser> _emailStore;
-        private readonly IEmailSender _emailSender;
+        private readonly IMaillingService _emailSender;
         private readonly ILogger<ExternalLoginModel> _logger;
 
         public ExternalLoginModel(
@@ -36,7 +37,7 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
             UserManager<StudentUser> userManager,
             IUserStore<StudentUser> userStore,
             ILogger<ExternalLoginModel> logger,
-            IEmailSender emailSender)
+            IMaillingService emailSender)
         {
             _signInManager = signInManager;
             _userManager = userManager;
@@ -173,15 +174,8 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
                             pageHandler: null,
                             values: new { area = "Identity", userId = userId, code = code },
                             protocol: Request.Scheme);
-                        try
-                        {
-                            await _emailSender.SendEmailAsync(Input.Email, "Confirm your email", $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
-                        }
-                        catch (Exception e)
-                        {
-                            ModelState.AddModelError(string.Empty, e.Message);
-                            _logger.LogError(message: e.Message, info?.LoginProvider);
-                        }
+
+                        var sentResult = await _emailSender.SendEmailAsync(Input.Email, "Confirm your email", $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
                         // If account confirmation is required, we need to show the link if we don't have a real email sender
                         if (_userManager.Options.SignIn.RequireConfirmedAccount)

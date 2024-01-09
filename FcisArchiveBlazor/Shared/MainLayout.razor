@@ -6,10 +6,19 @@
             margin-top: 12%;
             margin-bottom: -12%;
         }
+
+        .warnning-banner {
+            margin-top: 12%;
+            margin-bottom: -12%;
+        }
+
+        .warnning-banner span {
+            font-size: 10px;
+        }
     }
 
 
-    .palestine-banner{
+    .palestine-banner {
         padding: 4px;
         background: #e4f4ed;
         font-size: 13px;
@@ -29,7 +38,27 @@
         justify-content: center;
     }
 
-
+    .warnning-banner {
+        text-transform: uppercase;
+        padding: 4px;
+        background: #E9D502;
+        opacity: 0.8;
+        font-size: 10px;
+        color: #001433;
+        font-weight: 700;
+        letter-spacing: -.38px;
+        line-height: 24px;
+        text-align: center;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-align-items: center;
+        -ms-flex-align: center;
+        align-items: center;
+        -webkit-justify-content: center;
+        -ms-flex-pack: center;
+        justify-content: center;
+    }
 </style>
 <div class="pagetitle">
     <PageTitle>Fcis Archive</PageTitle>
@@ -39,14 +68,22 @@
     <div class="sidebar">
         <NavMenu />
     </div>
-   
+
     <main>
 
         <div class="palestine-banner">
-            <img  width="25" src="/flag-palestinian.png" alt="Palestine Flag" />
-            <span class="mx-2">  PRAY FOR PALESTINE  </span>
-            <img width="25"  src="/flag-palestinian.png" alt="Palestine Flag" />
+            <img width="25" src="/flag-palestinian.png" alt="Palestine Flag" />
+            <span class="mx-2"> PRAY FOR PALESTINE </span>
+            <img width="25" src="/flag-palestinian.png" alt="Palestine Flag" />
         </div>
+
+        <div class="warnning-banner fw-bolder">
+            <span> Sending Email Verifications is disabled due to some technical issues, if you are having any
+                trouble contact 
+                <a target="_blank" style="text-transform: lowercase;" href="https://t.me/mimatmalxe">@@mimatmalxe</a> on telegram
+            </span>
+        </div>
+
         <article id="article" class="content px-4">
             @Body
         </article>

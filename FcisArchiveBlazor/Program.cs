@@ -1,7 +1,6 @@
 using FcisArchiveBlazor.Areas.Identity;
 using FcisArchiveBlazor.Services;
 using FcisArchiveBlazor.Settings;
-//using FcisArchiveBlazor.Data;
 using FCISQuestionsHub.Core.Interfaces;
 using FCISQuestionsHub.Core.Models;
 using FCISQuestionsHub.EF.Data;
@@ -23,21 +22,22 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddTransient<ApplicationDbContext>();
 
 
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddIdentity<StudentUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultUI().AddDefaultTokenProviders();
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<StudentUser>>();
+
 builder.Services.AddSingleton(typeof(IBaseRepo<>), typeof(BaseRepo<>));
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
-
-//sending mails to users, using mailkit
-builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
-builder.Services.AddTransient<IMaillingService, MaillingService>();
-
+{
+    //sending mails to users, using mailkit
+    builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettingsGoogle"));
+    builder.Services.AddTransient<IMaillingService, MaillingService>();
+}
 // cashing service
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient();
@@ -56,7 +56,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-  app.UseExceptionHandler("/Error");
+    app.UseExceptionHandler("/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }

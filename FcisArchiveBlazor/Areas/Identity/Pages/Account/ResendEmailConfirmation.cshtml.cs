@@ -23,12 +23,12 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<StudentUser> _signInManager;
 
-        private readonly ILogger<ExternalLoginModel> _logger;
+        private readonly ILogger<ResendEmailConfirmationModel> _logger;
 
-        private readonly UserManager<FCISQuestionsHub.Core.Models.StudentUser> _userManager;
+        private readonly UserManager<StudentUser> _userManager;
         private readonly IMaillingService _emailSender;
 
-        public ResendEmailConfirmationModel(UserManager<StudentUser> userManager, IMaillingService emailSender, SignInManager<StudentUser> signInManager, ILogger<ExternalLoginModel> logger)
+        public ResendEmailConfirmationModel(UserManager<StudentUser> userManager, IMaillingService emailSender, SignInManager<StudentUser> signInManager, ILogger<ResendEmailConfirmationModel> logger)
         {
             _userManager = userManager;
             _emailSender = emailSender;
@@ -88,19 +88,13 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account
 
 
             var info = await _signInManager.GetExternalLoginInfoAsync();
-            try
+
+            var sentResult = await _emailSender.SendEmailAsync(Input.Email, "Confirm your email", $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+            if (!sentResult)
             {
-
-                await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                    $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
-
+                ModelState.AddModelError(string.Empty, "Email didn't sent, please try again or contact us on telegram @mimatmalxe.");
+                return Page();
             }
-            catch (Exception e)
-            {
-                _logger.LogError(message: e.Message, info?.LoginProvider);
-            }
-
-
             ModelState.AddModelError(string.Empty, "Verification email sent. Please check your email. You should be expecting an email from us shortly from mimatmalxe@outlook.com, make sure to check the spam \n if you didn't find in inbox contact me on telegram @mimatmalxe.");
             return Page();
         }

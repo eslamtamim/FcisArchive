@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using FcisArchiveBlazor.Services;
+using FCISQuestionsHub.Core.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -18,24 +19,24 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account.Manage
 {
     public class EmailModel : PageModel
     {
-        private readonly ExternalLoginInfo info;
-        private readonly ILogger<ExternalLoginModel> _logger;
-        private readonly UserManager<FCISQuestionsHub.Core.Models.StudentUser> _userManager;
-        private readonly SignInManager<FCISQuestionsHub.Core.Models.StudentUser> _signInManager;
+        //private readonly ExternalLoginInfo info;
+        private readonly ILogger<EmailModel> _logger;
+        private readonly UserManager<StudentUser> _userManager;
+        private readonly SignInManager<StudentUser> _signInManager;
         private readonly IMaillingService _emailSender;
 
         public EmailModel(
-            UserManager<FCISQuestionsHub.Core.Models.StudentUser> userManager,
-            SignInManager<FCISQuestionsHub.Core.Models.StudentUser> signInManager,
+            UserManager<StudentUser> userManager,
+            SignInManager<StudentUser> signInManager,
             IMaillingService emailSender,
-            ILogger<ExternalLoginModel> logger
+            ILogger<EmailModel> logger
          )
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailSender = emailSender;
             _logger = logger;
-            this.info = _signInManager.GetExternalLoginInfoAsync().Result;
+            //this.info = _signInManager.GetExternalLoginInfoAsync().Result;
         }
 
         /// <summary>
@@ -80,7 +81,7 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account.Manage
             public string NewEmail { get; set; }
         }
 
-        private async Task LoadAsync(FCISQuestionsHub.Core.Models.StudentUser user)
+        private async Task LoadAsync(StudentUser user)
         {
             var email = await _userManager.GetEmailAsync(user);
             Email = email;
@@ -130,21 +131,16 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account.Manage
                     pageHandler: null,
                     values: new { area = "Identity", userId = userId, email = Input.NewEmail, code = code },
                     protocol: Request.Scheme);
-                try
+
+
+                var sentResult = await _emailSender.SendEmailAsync(Input.NewEmail, "Confirm your email",
+                    $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                if (!sentResult)
                 {
-
-                    await _emailSender.SendEmailAsync(Input.NewEmail, "Confirm your email",
-                        $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
-
-                }
-                catch (Exception e)
-                {
-
                     StatusMessage = "Verification email didn't sent :( Please try again or contact admin.";
-                    _logger.LogError(message: e.Message, info?.LoginProvider);
                     return RedirectToPage();
-
                 }
+
                 StatusMessage = $"Confirmation link to change email sent to {Input.NewEmail}. Please check your email.";
                 return RedirectToPage();
             }
@@ -176,20 +172,11 @@ namespace FcisArchiveBlazor.Areas.Identity.Pages.Account.Manage
                 pageHandler: null,
                 values: new { area = "Identity", userId = userId, code = code },
                 protocol: Request.Scheme);
-            try
-            {
 
-                await _emailSender.SendEmailAsync(email, "Confirm your email",
-                    $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
-                StatusMessage = "Verification email sent. Please check your email.";
+            var sentResult = await _emailSender.SendEmailAsync(email, "Confirm your email", $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+            if (!sentResult) StatusMessage = "Verification email didn't sent :( Please try again or contact admin.";
+            else StatusMessage = "Verification email sent. Please check your email.";
 
-
-            }
-            catch (Exception e)
-            {
-                StatusMessage = "Verification email didn't sent :( Please try again or contact admin.";
-                _logger.LogError(message: e.Message, info?.LoginProvider);
-            }
             return RedirectToPage();
         }
     }

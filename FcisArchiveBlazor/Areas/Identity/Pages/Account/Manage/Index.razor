@@ -1,6 +1,7 @@
 ﻿@page "/Account/Manage"
 @using Microsoft.AspNetCore.Mvc;
 @using System.Drawing;
+@inject ILogger<Index> _logger
 @inject UserManager<StudentUser> _userManager
 @inject SignInManager<StudentUser> _signInManager
 @inject ApplicationDbContext _dbcontext
@@ -169,9 +170,9 @@ else
 
             userAuth = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
         }
-        catch (Exception ex)
+        catch (Exception e)
         {
-
+            _logger.LogError(e.Message);
         }
         if (userAuth == null)
         {
