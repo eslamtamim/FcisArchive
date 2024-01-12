@@ -6,6 +6,7 @@
 
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Scoreboard</title>
 </head>
@@ -50,13 +51,34 @@
                             @foreach (var currUser in currTable)
                             {
                                 string color = ColorOfName(currUser.QuestionsSolved);
-                                <tr style=" @(currUser.QuestionsSolved >= 1000  ? $"color:{color};font-weight:bold;" : "") " class="">
-                                    <td>@(i++) @(i == 2 ? "  🥇" : "") @(i == 3 ? "  🥈" : "") @(i == 4 ? "  🥉" : "") </td>
+                                <tr style=" @(currUser.QuestionsSolved >= 1000  ? $"color:{color};font-weight:bold;" : "") "
+                                    class="">
+                                    <td>@(i++) @(i == 2 ? " 🥇" : "") @(i == 3 ? " 🥈" : "") @(i == 4 ? " 🥉" : "") </td>
                                     <td>
-                                        @(currUser.DisplayName is not null ? currUser.DisplayName : currUser.FirstName + " " + currUser.LastName)
+                                        @(currUser.DisplayName is not null ? currUser.DisplayName : currUser.FirstName + " " +
+                                            currUser.LastName)
+
+
+                                        @if (table.Key == Year.Second)
+                                        {
+                                            var con = mostSolvedSubject.TryGetValue(currUser.Id, out var mss);
+                                            if (con)
+                                            {
+
+                                                <span style="color: rgb(0, 0, 0); font-weight: bold; font-size: 0.8rem;">
+                                                    
+                                                    @(" {")
+
+                                                    @(mss?.SubjectName ==  "DataStructure&Algorithms" ? "DSA": mss?.SubjectName ) &#8593; @mss?.Solved @(" }")
+
+                                                </span>
+                                            }
+                                        }
+
+
                                         @if (this.user is not null && currUser.Id == this.user.Id)
                                         {
-                                            <span style="color:blue;"> (You)</span>
+                                            <span style="color:rgb(212, 95, 125)136, 136, 220);"> (You)</span>
                                         }
                                     </td>
                                     <td>@currUser.QuestionsSolved</td>
@@ -80,16 +102,6 @@
                             Show More
                         </button>
                     }
-
-                    @*  <div>
-
-                <p>* You Need to solve at least 20 questions to get in the scoreboard.</p>
-                @if (ThisUser is not null)
-                {
-                <p>* You now have solved @ThisUser.QuestionsSolved question. Great Job, Keep Going </p>
-                }
-                <p>All users in the Scoreboard: @CountUsers</p>
-                </div> *@
                 </div>
             }
         </div>
@@ -110,7 +122,8 @@
                     <div>
 
 
-                        <InputSelect @bind-Value="Input.AcademicYear" class="form-control" placeholder="Please choose Your Academic Year.">
+                        <InputSelect @bind-Value="Input.AcademicYear" class="form-control"
+                            placeholder="Please choose Your Academic Year.">
                             <option value="">Your Academic Year</option>
 
                             @foreach (var item in Enum.GetValues(typeof(Year)))
@@ -120,27 +133,7 @@
 
                         </InputSelect>
                     </div>
-                    @*
-                <label class="form-label">Department</label>
 
-                <div>
-
-
-                <InputSelect @bind-Value="Input.Department" class="form-control" placeholder="Please choose your Department.">
-
-                @foreach (var item in Enum.GetValues(typeof(Department)))
-                {
-                <option value="@item">@item.ToString()</option>
-                }
-
-                </InputSelect>
-                </div> *@
-                    @*
-                <div>
-                <label class="form-label">Section</label>
-                <InputNumber @bind-Value="Input.Section" class="form-control" placeholder="Your Section Number." />
-                </div>
-                *@
                     <br>
                     <button type="submit" class="btn btn-primary">Submit</button>
                 </EditForm>
@@ -153,12 +146,14 @@
 
 
 </body>
+
 </html>
 
 @code {
 
-    record User(string Id, string FirstName, string LastName, string UserName, int QuestionsSolved, string DisplayName, Department? Department, Year? Year);
-
+    record User(string Id, string FirstName, string LastName, string UserName, int QuestionsSolved, string DisplayName,
+    Department? Department, Year? Year);
+    record MostSolvedSubject(string id, string SubjectName, int Solved);
     class ScoreboardForm
     {
         [Required, MaxLength(50)]
@@ -180,6 +175,7 @@
 
     bool[] ShowMore = new bool[5];
     Dictionary<Year, List<User>> UsersDisplayed = new();
+    Dictionary<string, MostSolvedSubject> mostSolvedSubject = new();
 
     StudentUser user;
     int CountUsers;
@@ -191,14 +187,13 @@
     {
 
         UserAuth = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
-
+        mostSolvedSubject = GetMostSolvecSubjects();
         AllTables = new();
         @foreach (var year in Enum.GetValues(typeof(Year)))
         {
             AllTables.Add((Year)year, GetUsers((Year)year));
         }
-
-
+      
         if (UserAuth.User.Identity is { Name: not null })
         {
             user = _context.Users.FirstOrDefault(e => e.UserName == UserAuth.User.Identity.Name);
@@ -222,7 +217,7 @@
         // TopUsers = users.Where(u => u.QuestionsSolved >= 50).ToList();
         // ShowingNowUsers = TopUsers;
         // if (TopUsers.Count() == 0) ShowingNowUsers = users;
-
+        UsersDisplayed.Remove(Year.Third);
 
         CountUsers = _context.Users.Count();
         CountQuestionsSolved = _context.studentQuestionAnswer.Count();
@@ -230,11 +225,11 @@
 
         // users = new List<User>
         // {
-        //     new User("1", "John", "Doe", "johndoe", 1005,null,null,null),
-        //     new User("2", "Jane", "Doe", "janedoe", 3400,null,null,null),
-        //     new User("3", "John", "Smith", "johnsmith", 90000,null,null,null),
-        //     new User("4", "Jane", "Smith", "janesmith", 2200,null,null,null),
-        //     new User("5", "John", "Jones", "johnjones", 5000,null,null,null),
+        // new User("1", "John", "Doe", "johndoe", 1005,null,null,null),
+        // new User("2", "Jane", "Doe", "janedoe", 3400,null,null,null),
+        // new User("3", "John", "Smith", "johnsmith", 90000,null,null,null),
+        // new User("4", "Jane", "Smith", "janesmith", 2200,null,null,null),
+        // new User("5", "John", "Jones", "johnjones", 5000,null,null,null),
         // }.OrderByDescending(e => e.QuestionsSolved).ToList();
 
         await base.OnInitializedAsync();
@@ -252,10 +247,35 @@
                 where s.Year == year
                 group u by new { u.Id, u.FirstName, u.LastName, u.UserName, u.DisplayName, u.Department, u.AcademicYear } into g
                 orderby g.Count() descending
-                select new User(g.Key.Id, g.Key.FirstName, g.Key.LastName, g.Key.UserName, g.Count(), g.Key.DisplayName, g.Key.Department, g.Key.AcademicYear)).ToList();
+                select new User(g.Key.Id, g.Key.FirstName, g.Key.LastName, g.Key.UserName, g.Count(), g.Key.DisplayName,
+                g.Key.Department, g.Key.AcademicYear)).ToList();
 
     }
 
+    Dictionary<string, MostSolvedSubject> GetMostSolvecSubjects()
+    {
+        var mostSolvedSubjects = _context.studentQuestionAnswer
+        .Where(sqa => sqa.SubmittedOn >= DateTime.UtcNow.Date.AddDays(-7))
+        .GroupBy(sqa => new { sqa.student.Id, sqa.question.Subject.Name })
+        .OrderByDescending(g => g.Count())
+        .Select(g => new MostSolvedSubject(g.Key.Id, g.Key.Name, g.Count()))
+        .ToList();
+
+
+        @* var mostSolvedSubject = (from sqa in _context.studentQuestionAnswer
+join u in _context.Users on sqa.studentsId equals u.Id
+join q in _context.questions on sqa.questionId equals q.Id
+join s in _context.subjects on q.SubjectId equals s.Id
+where sqa.SubmittedOn.Value.Date >= DateTime.Now.Date.AddDays(-5)
+group u by new { u.Id, s.Name } into g
+orderby g.Count() descending
+select new MostSolvedSubject(g.Key.Id, g.Key.Name, g.Count())).ToList(); *@
+
+        var dict = new Dictionary<string, MostSolvedSubject>();
+
+        foreach (var user in mostSolvedSubjects) dict.TryAdd(user.id, user);
+        return dict;
+    }
 
 
     public string ColorOfName(int solvedQuestions)
@@ -275,7 +295,6 @@
         user.AcademicYear = Input.AcademicYear;
         user.Department = Input.Department;
         user.Section = Input.Section;
-
         await _context.SaveChangesAsync();
         await this.OnInitializedAsync();
     }
