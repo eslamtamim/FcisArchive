@@ -1,10 +1,7 @@
 ﻿using FcisArchiveBlazor.Settings;
-using FCISQuestionsHub.Core.Models;
-using Humanizer;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using MimeKit;
 
