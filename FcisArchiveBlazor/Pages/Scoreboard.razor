@@ -24,7 +24,7 @@
 
     <div class=" ScoreContent m-2">
 
-        <div class="d-flex gap-5">
+        <div class="d-flex gap-3" >  
             @foreach (var table in UsersDisplayed)
             {
                 var currTable = UsersDisplayed[table.Key];
@@ -33,14 +33,13 @@
                     if (AllTables[table.Key].Count == 0) continue;
                     currTable = AllTables[table.Key];
                 }
-
-                <div>
+             <div>
                     <h5>@table.Key Year </h5>
-                    <table>
+                  <table style=" max-width: 25rem;min-width: 15rem;">
                         <thead>
                             <tr>
                                 <th>Rank</th>
-                                <th>Full Name</th>
+                                <th>Name</th>
                                 <th>Score</th>
                             </tr>
                         </thead>
@@ -55,8 +54,7 @@
                                     class="">
                                     <td>@(i++) @(i == 2 ? " 🥇" : "") @(i == 3 ? " 🥈" : "") @(i == 4 ? " 🥉" : "") </td>
                                     <td>
-                                        @(currUser.DisplayName is not null ? currUser.DisplayName : currUser.FirstName + " " +
-                                            currUser.LastName)
+                                        @(currUser.DisplayName ?? currUser.FirstName + " " + currUser.LastName)
 
 
                                         @if (table.Key == Year.Second)
@@ -74,11 +72,9 @@
                                                 </span>
                                             }
                                         }
-
-
                                         @if (this.user is not null && currUser.Id == this.user.Id)
                                         {
-                                            <span style="color:rgb(212, 95, 125)136, 136, 220);"> (You)</span>
+                                            <span style="color:rgb(112, 25, 25)"> (You)</span>
                                         }
                                     </td>
                                     <td>@currUser.QuestionsSolved</td>
@@ -104,6 +100,38 @@
                     }
                 </div>
             }
+            <div>
+
+                 <h5>Top Subject &#8594; User This Week</h5>
+
+                  <table style="width: .2rem;">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Subject</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var currUser in mostSolvedSubject.Values)
+                            {
+                                string color = ColorOfName(currUser.Solved);
+                                <tr style="font-weight:bold;width: 0.5rem;">
+                                    <td>
+                                        @(currUser.DisplayName ?? currUser.FirstName + " " +currUser.LastName)
+                                        @if (this.user is not null && currUser.id == this.user.Id)
+                                        {
+                                         <span style="color:rgb(112, 25, 25)"> (You)</span>
+
+                                        }
+                                    </td>
+                                    <td> @(currUser?.SubjectName ==  "DataStructure&Algorithms" ? "DSA": currUser?.SubjectName)</td>
+                                    <td>@currUser.Solved</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+            </div>
         </div>
 
         @if (user is not null)
@@ -153,7 +181,7 @@
 
     record User(string Id, string FirstName, string LastName, string UserName, int QuestionsSolved, string DisplayName,
     Department? Department, Year? Year);
-    record MostSolvedSubject(string id, string SubjectName, int Solved);
+    record MostSolvedSubject(string id,string FirstName, string LastName, string DisplayName, string SubjectName, int Solved);
     class ScoreboardForm
     {
         [Required, MaxLength(50)]
@@ -256,9 +284,9 @@
     {
         var mostSolvedSubjects = _context.studentQuestionAnswer
         .Where(sqa => sqa.SubmittedOn >= DateTime.UtcNow.Date.AddDays(-7))
-        .GroupBy(sqa => new { sqa.student.Id, sqa.question.Subject.Name })
+        .GroupBy(sqa => new { sqa.student.Id, sqa.student.FirstName, sqa.student.LastName, sqa.student.DisplayName, sqa.question.Subject.Name })
         .OrderByDescending(g => g.Count())
-        .Select(g => new MostSolvedSubject(g.Key.Id, g.Key.Name, g.Count()))
+        .Select(g => new MostSolvedSubject(g.Key.Id, g.Key.FirstName, g.Key.LastName, g.Key.DisplayName, g.Key.Name, g.Count()))
         .ToList();
 
 
