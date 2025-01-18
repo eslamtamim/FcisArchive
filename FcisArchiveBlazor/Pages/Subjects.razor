@@ -1,0 +1,107 @@
+@page "/subjects"
+@inject ApplicationDbContext _dbcontext
+@inject IMemoryCache cache
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+
+
+@if (subjects == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Year - Semester</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var subject in subjects)
+            {
+                <tr>
+                    <td>@subject.Id</td>
+                    <td>@subject.Name</td>
+                    <td>@subject.Year - @subject.Semester</td>
+                    <td>
+                        <button class="btn btn-primary" @onclick="() => EditSubject(subject)">Edit</button>
+                        <button class="btn btn-danger" @onclick="() => DeleteSubject(subject.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+
+    <h3>Add New Subject</h3>
+    <EditForm Model="newSubject" OnValidSubmit="AddSubject">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <InputText id="name" class="form-control" @bind-Value="newSubject.Name" />
+        </div>
+        <div class="form-group">
+            <label for="year">Year:</label>
+            <InputSelect id="year" class="form-control" @bind-Value="newSubject.Year">
+                @foreach (var year in Enum.GetValues(typeof(Year)).Cast<Year>())
+                {
+                    <option value="@year">@year</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="form-group">
+            <label for="semester">Semester:</label>
+            <InputSelect id="semester" class="form-control" @bind-Value="newSubject.Semester">
+                @foreach (var semester in Enum.GetValues(typeof(Semester)).Cast<Semester>())
+                {
+                    <option value="@semester">@semester</option>
+                }
+            </InputSelect>
+        </div>
+        <br>
+        <button type="submit" class="btn btn-primary">Add Subject</button>
+    </EditForm>
+}
+
+@code {
+
+
+    private List<Subject> subjects;
+
+    protected override async Task OnInitializedAsync()
+    {
+        subjects = await _dbcontext.subjects.ToListAsync();
+    }
+
+    private Subject newSubject = new Subject();
+
+    private async Task AddSubject()
+    {
+        _dbcontext.subjects.Add(newSubject);
+        await _dbcontext.SaveChangesAsync();
+        subjects = await _dbcontext.subjects.ToListAsync();
+        newSubject = new Subject();
+    }
+    private async Task EditSubject(Subject subject)
+    {
+        @* var parameters = new Dictionary<string, object> { { "Id", subject.Id } };
+        var dialog = DialogService.Show<EditSubjectDialog>("Edit Subject", parameters);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            subjects = await _dbcontext.subjects.ToListAsync();
+        } *@
+    }
+
+    private async Task DeleteSubject(int id)
+    {
+        var subject = await _dbcontext.subjects.FindAsync(id);
+        _dbcontext.subjects.Remove(subject);
+        await _dbcontext.SaveChangesAsync();
+        subjects = await _dbcontext.subjects.ToListAsync();
+    }
+}

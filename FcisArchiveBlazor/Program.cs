@@ -12,11 +12,11 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-//string DEFAULTCONNECTION = "DefaultConnection";
+string DEFAULTCONNECTION = "psql";
 // string AZURESQL = "AzureSQL";
 
-string psql = "psql";
-var connectionString = builder.Configuration.GetConnectionString(psql) ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+ //string psql = "psql";
+var connectionString = builder.Configuration.GetConnectionString(DEFAULTCONNECTION) ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseLazyLoadingProxies().UseNpgsql(connectionString));
 builder.Services.AddTransient<ApplicationDbContext>();

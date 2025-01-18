@@ -1,0 +1,135 @@
+@page "/aiq"
+@inject ApplicationDbContext _dbContext
+@inject IMemoryCache _cache
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+
+@using OpenAI.Chat
+@using System.Text.Json
+
+<div class="d-flex gap-4">
+
+    <InputFile OnChange="HandleFileSelected" multiple class="form-control w-25 form-control-sm" />
+
+    <select @bind="selectedSubjectId">
+        @foreach (var subject in subjects)
+        {
+            <option value="@subject.Id">@subject.Name</option>
+        }
+    </select>
+</div>
+
+@if (questions.Any())
+{
+    <h3>@status</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Question</th>
+                <th>Answers</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var question in questions)
+            {
+                <tr>
+                    <td>@question.Text</td>
+                    <td>
+                        <ul>
+                            @foreach (var answer in question.answers)
+                            {
+                                <li style="color: @(answer.IsCorrect ? "green" : "black")">@answer.Text</li>
+                            }
+                        </ul>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+
+@code {
+    private int selectedSubjectId;
+    public string status { get; set; }
+    private string UserId { get; set; }
+    private List<Subject> subjects = new();
+    private List<Question> questions = new();
+    private IBrowserFile file;
+    AuthenticationState UserAuth { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserAuth = await GetAuthenticationStateAsync.GetAuthenticationStateAsync();
+        var userName = UserAuth.User.Identity?.Name;
+        if (userName != null)
+        {
+            UserId = _dbContext.Users.FirstOrDefault(u => u.UserName == userName)?.Id;
+        }
+        subjects = await _dbContext.subjects.ToListAsync();
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var files = e.GetMultipleFiles(50);
+        if (files == null || !files.Any())
+        {
+            return;
+        }
+
+
+        foreach (var file in files)
+        {
+            this.file = file;
+            using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024); // 5 MB limit
+            using var reader = new StreamReader(stream);
+            string content = await reader.ReadToEndAsync();
+            questions = JsonSerializer.Deserialize<List<Question>>(content);
+
+            StateHasChanged();
+            await AddQuestions();
+            status = $"Questions for {file.Name} added successfully";
+        }
+
+    }
+
+    private async Task AddQuestions()
+    {
+        Console.WriteLine("Adding questions");
+        Console.WriteLine(file.Name);
+        var fileData = file.Name.Split("-");
+        var lecName = $"{fileData[1]}-{fileData[2]}";
+        var lecture = await _dbContext.lectures.FirstOrDefaultAsync(l => l.Name == lecName);
+        if (lecture is null)
+        {
+            lecture = new Lecture
+                {
+                    Name = lecName,
+                    SubjectId = selectedSubjectId,
+                    UploaderId = UserId
+                };
+            await _dbContext.lectures.AddAsync(lecture);
+            await _dbContext.SaveChangesAsync();
+        }
+        else{
+            return;
+        }
+
+        await _dbContext.questions.AddRangeAsync(questions.Select(q => new Question
+            {
+                SubjectId = selectedSubjectId,
+                LectureId = lecture.Id,
+                Text = q.Text,
+                AuthorName = q.AuthorName,
+                Hint = q.Hint,
+                QuestionType = q.QuestionType,
+                answers = q.answers.Select(a => new Answer
+                {
+                    Text = a.Text,
+                    IsCorrect = a.IsCorrect
+                }).ToList()
+            }));
+        await _dbContext.SaveChangesAsync();
+
+    }
+}
